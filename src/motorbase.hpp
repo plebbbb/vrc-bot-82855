@@ -31,10 +31,10 @@ struct basecontroller{
 */
   void vectormove(double x, double y, double r){
     for (int i = 0; i < arrlen; i++){
-      MAP[i].mot = (-x*MAP[i].sinV + y*MAP[i].cosV + r);
-      //calculation for the power of each motor, see discord #design-ideas for formula
       /*note that we dont multiply by 127 b/c this vectormove is for opcontrol,
       and the controller's input is already from -127 to 127, instead of -1 to 1*/
+      MAP[i].mot = (-x*MAP[i].sinV + y*MAP[i].cosV + r);
+      //calculation for the power of each motor, see discord #design-ideas for formula
     };
   }
 /*This version of vectormove is intended for auton usage
@@ -42,8 +42,8 @@ struct basecontroller{
 */
   void vectormove(double x, double y, double r, double spd){
     for (int i = 0; i < arrlen; i++){
-      MAP[i].mot = spd*127*(-x*MAP[i].sinV + y*MAP[i].cosV + r);
       //calculation for the power of each motor, see discord #design-ideas for formula
+      MAP[i].mot = spd*127*(-x*MAP[i].sinV + y*MAP[i].cosV + r);
     };
   }
 };
