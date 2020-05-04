@@ -8,14 +8,73 @@
   with rotation.
 */
 
+//Variables:
+double speedmultiplier = 1;
+double angleG = 0;
+double xG = 0;
+double yG = 0;
+
+//ADIEncoder arrays:
+//ADIEncoder format: pin 1, pin2, inversed or not
+ADIEncoder odencoders[] = {
+  ADIEncoder(0,1,true),
+  ADIEncoder(2,3,false),
+  ADIEncoder(4,5,false)
+};
+
 //motorw arrays:
 //motorw format: pin, inv dir, orientation, wheel size
 motorw kiwimotors[] = {
-  motorw(1,true,(M_PI*2)/3,2.5), //right motor
-  motorw(2,true,(M_PI*4)/3,2.5), //left motor
-  motorw(3,true,0,2.5) //Pure translational Motor
+  motorw(1,true,(M_PI*2)/3), //right motor
+  motorw(2,true,(M_PI*4)/3), //left motor
+  motorw(3,true,0) //Pure translational Motor
 };
 
 
-//basecontrollers:
+//controllers:
+Controller ctrl = E_CONTROLLER_MASTER;
+odometrycontroller odo(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base(kiwimotors);
+
+//functions:
+double determinebiggest(double a, double b){
+  if (a>b) return a;
+  else return b;
+}
+
+double determinebiggest(double a[]){
+  return (insertionsort(a))[sizeof(a)-1];
+}
+
+double isposorneg(double input){
+  //there is 100% a better solution but this works so imma keep it for now
+  //if someone figures it out pls change it
+  return input/fabs(input);
+}
+
+double getrelrad(double crad, double trad){
+  //note: untested but also probably not actually correct. Pls test
+  if (fabs(trad-crad) > M_PI) return (2*M_PI-fabs(trad-crad))*isposorneg(trad-crad);
+  return (trad-crad)*isposorneg(trad-crad);
+}
+
+double rottodist(double rad, double radius){
+  return rad*radius;
+}
+
+double insertionsort(double arr[]){
+  int i, j;
+  double key;
+ for (i = 1; i < sizeof(arr); i++)
+ {
+     key = arr[i];
+     j = i - 1;
+     while (j >= 0 && arr[j] > key)
+     {
+         arr[j + 1] = arr[j];
+         j = j - 1;
+     }
+     arr[j + 1] = key;
+ }
+ return arr;
+}
