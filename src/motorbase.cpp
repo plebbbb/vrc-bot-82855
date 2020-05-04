@@ -11,8 +11,8 @@
 //motorw arrays:
 //motorw format: pin, inv dir, orientation, wheel size
 motorw kiwimotors[] = {
-  motorw(1,true,M_PI_2/3,2.5), //right motor
-  motorw(2,true,M_PI_4/3,2.5), //left motor
+  motorw(1,true,(M_PI*2)/3,2.5), //right motor
+  motorw(2,true,(M_PI*4)/3,2.5), //left motor
   motorw(3,true,0,2.5) //Pure translational Motor
 };
 
