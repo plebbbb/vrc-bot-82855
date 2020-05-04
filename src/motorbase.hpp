@@ -2,8 +2,12 @@
 using namespace pros;
 /*ADVANCE DECLARATIONS*/
 
-struct motorw; struct odometrycontroller; struct basecontroller;
-
+struct motorw;
+struct odometrycontroller;
+struct basecontroller;
+class PID;
+struct motorf;
+struct dualScurve;
 
 /*GLOBAL DEFINITIONS*/
 //in inches or rads
@@ -22,7 +26,7 @@ extern double xG;
 extern double yG;
 extern double speedmultiplier;
 extern odometrycontroller odo;
-extern motorw basemotors[];
+extern motorw kiwimotors[];
 extern basecontroller base;
 
 
@@ -43,39 +47,92 @@ extern double rottodist(double rad, double radius);
 
 /*CLASS DECLARATIONS*/
 
+//curveS: a single S curve
+class curveS{
+  double* vars;
+public:
+  curveS(double arr[]){vars = arr;}
+  double getval(double pos){
+    return vars[0]/(1+pow(M_E,-vars[1]*(pos-vars[2])));
+  }
+};
+
 //dualScurve: a set of 2 S curves made to aproximate what motion profiling might look like
 struct dualScurve{
-
+  curveS* a;
+  curveS* b;
+  dualScurve(curveS c, curveS d){a=&c; b=&d;}
+  double getval(double pos){
+    if (pos < 50) return a->getval(pos);
+    else return b->getval(pos);
+  };
 };
 
 /*PID: generic PID system*/
+//NOTE: HAS NOT BEEN TESTED PLS TEST
 class PID{
 private:
   /*Integral mode configurations:
-  0: Direct I scaling - 100% of I is added each cycle
-  1: Asymptope I - I approaches the max*/
-  int Imode = 0;
+  false: Direct I scaling - 100% of I is added each cycle
+  true: Asymptope I - I approaches the max*/
+  bool Imode = 0;
+
   /*Proportional mode configurations
-  0: Raw input
-  1: External S curve, percent to target based
+  false: Raw input
+  true: External S curve, percent to target based
   */
-  int Pmode = 0;
+  bool Pmode = 0;
+
   //Izerocutoff: turns I to 0 when target reached
   bool Izerocutoff = true;
-  //Pk, Ik and Dk array
+
+  //Pk, Ik, Dk, and I fraction array
   double* ratios;
-  //selected dualScurve
+
+  //selected dualScurve for Pmode = 1
   dualScurve* Scurve;
+
+  //the max limits for the loop
+  double maxIlimit;
+  double maxlimit;
+
+  //P, I, D, position, and target array
+  double PIDa[4] = {0};
+
+  double lasterror = 0;
 public:
-  PID(double scalers[], double modesettings[]){
-    ratios = scalers;
+  PID(double scalers[], bool ms[]){
+    ratios = scalers; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = ms[3]; maxIlimit = ms[4];
   }
-  PID(double scalers[], double modesettings[], dualScurve curve){
-    ratios = scalers; Scurve = &curve;
+  //note: if dualScurve is to be used, input percentage to target values
+  PID(double scalers[], bool ms[], dualScurve curve){
+    ratios = scalers; Scurve = &curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = ms[3]; maxIlimit = ms[4];
   }
+  //sets a new target for the loop w/o resetting PIDa
+  void set_tgt_soft(double tgt){
+    PIDa[3] = tgt;
+  }
+  //sets a new target for the loop and resets PIDa
+  void set_tgt_clean(double tgt){
+    PIDa[0]=0;PIDa[1]=0;PIDa[2]=0; //this is stupid
+    PIDa[3] = tgt;
+  }
+  double update(double in){
+    double err = (PIDa[3]-in);
+    if (Pmode) PIDa[0] = isposorneg(err)*Scurve->getval(fabs(err));
+    else PIDa[0] = err;
+    if (Imode) PIDa[1] += (err-PIDa[1])/ratios[3];
+    else PIDa[1] += err;
+    if (Izerocutoff && in == 0) PIDa[1] = 0;
+    if (fabs(PIDa[1]) > maxIlimit) PIDa[1] = isposorneg(PIDa[1])*maxIlimit;
+    PIDa[2] = err-lasterror;
+    lasterror = err;
+    double final = PIDa[0]*ratios[0] + PIDa[1]*ratios[1] + PIDa[2]*ratios[2];
+    return isposorneg(final)*determinebiggest(fabs(final),maxlimit);
+  };
 };
 
-/*motorf: A motor wrapping function for non-base motors which provides the following:
+/*motorf: A motor wrapper for non-base motors which provides the following:
   - PID control system
   - Internal angle scaling system
   - Built in encoder based control
@@ -87,6 +144,12 @@ public:
 */
 struct motorf{
   ADIEncoder* linkedencoder;
+  Motor* mot; //this might make a mess, but its only pointed to once so it's ok
+  double rotratio, tgt;
+  PID IntPID; //how do I full copy? the current method is bloaty
+  motorf(double scalers[], bool ms[], Motor usedmotor):IntPID(scalers, ms){mot = &usedmotor;}
+  motorf(double scalers[], bool ms[], Motor usedmotor, ADIEncoder LE):IntPID(scalers, ms)
+  {mot = &usedmotor; linkedencoder = &LE;}
   //PID_MOVE_TARGET
   void PID_MOVE_TARGET(){
 
@@ -97,10 +160,11 @@ struct motorf{
   }
 };
 
-/*motorw: A motor wrapping funion for bases which provides the following features:
+/*motorw: A motor wrapper for bases which provides the following features:
   - Additional information
     - Motor orientation data
     - Motor wheel size with calculations (INCHES)
+    NGL kinda useless, but its here for modularity
 */
 struct motorw{
   Motor mot;
@@ -153,13 +217,13 @@ struct odometrycontroller{
     xG+=chordlength*cos(angleG)+HD*sin(angleG+(relangle/2)); //15% this and below work
     yG+=chordlength*sin(angleG)+HD*cos(angleG+(relangle/2));
     angleG = fmod((angleG+relangle),(2*M_PI)); //technically sketchy but not really still pls test
-    left->reset(); //these resets seem to be not very reliable, so we may have to resort to storing the pre update value
+    left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
     right->reset();
     back->reset();
   }
   //keys position to a hardcoded target, use for wall allignments
   void key_position(double x, double y, double r){
-    left->reset(); //these resets seem to be not very reliable, so we may have to resort to storing the pre update value
+    left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
     right->reset();
     back->reset();
     xG = x;

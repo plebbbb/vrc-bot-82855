@@ -16,7 +16,7 @@ double yG = 0;
 
 //ADIEncoder arrays:
 //ADIEncoder format: pin 1, pin2, inversed or not
-ADIEncoder odencoders[] = {
+ADIEncoder odencoders[3] = {
   ADIEncoder(0,1,true),
   ADIEncoder(2,3,false),
   ADIEncoder(4,5,false)
@@ -45,11 +45,11 @@ double determinebiggest(double a, double b){
 double isposorneg(double input){
   //there is 100% a better solution but this works so imma keep it for now
   //if someone figures it out pls change it
-  return input/fabs(input);
+  return input/fabs(input); //its supposted to return 1 or -1, fyi
 }
 
 double getrelrad(double crad, double trad){
-  //note: untested but also probably not actually correct. Pls test
+  //note: untested but probably correct. Pls test
   if (fabs(trad-crad) > M_PI) return (2*M_PI-fabs(trad-crad))*isposorneg(trad-crad);
   return (trad-crad)*isposorneg(trad-crad);
 }
