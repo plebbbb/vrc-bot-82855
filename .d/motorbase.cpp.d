@@ -1,4 +1,4 @@
-bin/autonomous.cpp.o: src/autonomous.cpp include/main.h include/api.h \
+bin/motorbase.cpp.o: src/motorbase.cpp include/main.h include/api.h \
  include/pros/adi.h include/pros/colors.h include/pros/imu.h \
  include/pros/llemu.h include/display/lvgl.h include/display/lv_version.h \
  include/display/lv_misc/lv_log.h include/display/lv_conf.h \

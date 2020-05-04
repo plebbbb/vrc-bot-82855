@@ -42,10 +42,6 @@ double determinebiggest(double a, double b){
   else return b;
 }
 
-double determinebiggest(double a[]){
-  return (insertionsort(a))[sizeof(a)-1];
-}
-
 double isposorneg(double input){
   //there is 100% a better solution but this works so imma keep it for now
   //if someone figures it out pls change it
@@ -60,21 +56,4 @@ double getrelrad(double crad, double trad){
 
 double rottodist(double rad, double radius){
   return rad*radius;
-}
-
-double insertionsort(double arr[]){
-  int i, j;
-  double key;
- for (i = 1; i < sizeof(arr); i++)
- {
-     key = arr[i];
-     j = i - 1;
-     while (j >= 0 && arr[j] > key)
-     {
-         arr[j + 1] = arr[j];
-         j = j - 1;
-     }
-     arr[j + 1] = key;
- }
- return arr;
 }
