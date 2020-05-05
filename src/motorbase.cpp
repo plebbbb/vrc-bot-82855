@@ -16,6 +16,7 @@ double yG = 0;
 
 //ADIEncoder arrays:
 //ADIEncoder format: pin 1, pin2, inversed or not
+//Array format: Left, Right, Back
 ADIEncoder odencoders[3] = {
   ADIEncoder(0,1,true),
   ADIEncoder(2,3,false),
@@ -54,6 +55,7 @@ double getrelrad(double crad, double trad){
   return (trad-crad)*isposorneg(trad-crad);
 }
 
+//this is pretty stupid
 double rottodist(double rad, double radius){
   return rad*radius;
 }

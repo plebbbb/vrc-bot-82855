@@ -137,26 +137,57 @@ public:
   - Internal angle scaling system
   - Built in encoder based control
   - Multiple input control schemes
-    - Toggles
-    - Double button hold
-    - Joystick axis
+    - Toggles - currently not added in
+    - Double button hold - functioning
+    - Joystick axis - not to be done unless nescessary
   - Automated background operation based on sensor inputs
 */
 struct motorf{
   ADIEncoder* linkedencoder;
   Motor* mot; //this might make a mess, but its only pointed to once so it's ok
   double rotratio, tgt;
+  double curpos = 0;
+  double constraints[2];
+  controller_digital_e_t* button;
+  bool toggleorhold = true; //false is toggle, hold is true
+  bool islinked = false;
   PID IntPID; //how do I full copy? the current method is bloaty
-  motorf(double scalers[], bool ms[], Motor usedmotor):IntPID(scalers, ms){mot = &usedmotor;}
-  motorf(double scalers[], bool ms[], Motor usedmotor, ADIEncoder LE):IntPID(scalers, ms)
-  {mot = &usedmotor; linkedencoder = &LE;}
-  //PID_MOVE_TARGET
-  void PID_MOVE_TARGET(){
-
+  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, controller_digital_e_t but[]):IntPID(scalers, ms)
+  {mot = &usedmotor; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2];}
+  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms)
+  {mot = &usedmotor; linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true;}
+  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms)
+  {mot = &usedmotor; button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2];}
+  //PID_MOVE_TARGET: sets PID target
+  void PID_MOVE_TARGET(double tt){
+    tgt = tt;
+    IntPID.set_tgt_clean(tt);
   }
   //PID_MOVE_CYCLE: One increment PID update system, returns movement completion
   bool PID_MOVE_CYCLE(){
-
+    mot->move(IntPID.update(curpos));
+    if (fabs(tgt-curpos) < 2) return true;
+    return false;
+  }
+  //Dumb 100% throttle movement
+  void move(){
+    updateangle();
+    PID_MOVE_TARGET(curpos);
+    if (toggleorhold){
+      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1])) {mot->move(speedmultiplier*127); return;}
+      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1])) {mot->move(-speedmultiplier*127); return;}
+      PID_MOVE_CYCLE();
+      return;
+    }else{
+      //TBD: figure out toggle movement
+    }
+  }
+  void updateangle(){
+    if (islinked) curpos = rotratio*linkedencoder->get_value();
+    else curpos = rotratio*mot->get_position();
+  }
+  void keyangle(){
+    curpos = 0;
   }
 };
 
