@@ -1,11 +1,18 @@
 #include "main.h"
 using namespace pros;
+/*
+TO BE DONES:
+  1. ORGANIZE EVERYTHING HERE INTO THEIR OWN RESPECTIVE .hpp files,
+     I think we will keep initilizations centalized, maybe moved to main.cpp
+  2. FINISH ALL CLASS DEFINITIONS
+*/
+
 /*ADVANCE DECLARATIONS*/
 
+class PID;
 struct motorw;
 struct odometrycontroller;
 struct basecontroller;
-class PID;
 struct motorf;
 struct dualScurve;
 
@@ -14,8 +21,8 @@ struct dualScurve;
 
 #define Y_AXIS_TWHEEL_OFFSET 10 //offset from center line of the y axis tracking sheel
 #define X_AXIS_TWHEEL_OFFSET 7.5 //not being used currently. we'd need another horz wheel for that
-#define STD_WHEEL_RADIUS 1.875 //3.75in wheel
-#define STD_TWHEEL_RADIUS 1.25 //2.5in wheel
+#define STD_WHEEL_RADIUS 1.625 //3.25in wheel for main. TBD
+#define STD_TWHEEL_RADIUS 1.25 //2.5in wheel for tracking wheels
 
 
 /*GLOBAL VARIABLES*/
@@ -24,12 +31,12 @@ extern Controller ctrl;
 extern double angleG;
 extern double xG;
 extern double yG;
-extern double heading;
+extern double xyaT[3]; //is making this an array a good idea or not tbh not sure
+extern double heading; //may end up useless
 extern double speedmultiplier;
 extern odometrycontroller odo;
 extern motorw kiwimotors[];
 extern basecontroller base;
-
 
 /*UTLITITY FUNCTIONS*/
 
@@ -71,6 +78,7 @@ struct dualScurve{
 
 /*PID: generic PID system*/
 //NOTE: HAS NOT BEEN TESTED PLS TEST
+//ANOTHER NOTE: DEFAULT TGT = 0
 class PID{
 private:
   /*Integral mode configurations:
@@ -273,5 +281,20 @@ struct odometrycontroller{
 */
 struct coordcontroller{
   basecontroller* mBase;
-
+  PID* axiscontrollers; //the initial plan called for 3 PID controllers to allow for smooth motion curves, but for now we have a direct line approach
+  double* tcoords; //we are gonna try a potentially interesting approach, where we dont call coordcontroller but instead change the tgt coords directly
+  coordcontroller(basecontroller a, PID b[2], double t[3]){mBase = &a; axiscontrollers = b; tcoords = t;}
+  /*returns true when target is reached
+    potential camera implementation: overload update with version that replaces r and perp with camera controls
+    this overload would input the desired color profile that the camera is looking for.
+    note that constructor must be updated for this*/
+  bool update(){
+    double xD = xG-tcoords[0]; //relative distances to target
+    double yD = yG-tcoords[1]; //relative distances to target
+    double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
+    mBase->vectormove(xD,yD,rD,
+      axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2)))+
+      axiscontrollers[1].update(rD));
+    return false;
+  }
 };

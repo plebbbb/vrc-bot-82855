@@ -14,6 +14,7 @@ double angleG = 0;
 double xG = 0;
 double yG = 0;
 double heading = angleG;
+double xyT[3] = {0,0,angleG};
 
 //ADIEncoder arrays:
 //ADIEncoder format: pin 1, pin2, inversed or not
