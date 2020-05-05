@@ -7,6 +7,8 @@ TO BE DONES:
   2. FINISH ALL CLASS DEFINITIONS
 */
 
+
+//********************************************************************************//
 /*ADVANCE DECLARATIONS*/
 
 class PID;
@@ -16,43 +18,69 @@ struct basecontroller;
 struct motorf;
 struct dualScurve;
 
+
+//********************************************************************************//
 /*GLOBAL DEFINITIONS*/
 //in inches or rads
 
 #define Y_AXIS_TWHEEL_OFFSET 10 //offset from center line of the y axis tracking sheel
 #define X_AXIS_TWHEEL_OFFSET 7.5 //not being used currently. we'd need another horz wheel for that
-#define STD_WHEEL_RADIUS 1.625 //3.25in wheel for main. TBD
+#define STD_WHEEL_RADIUS 1.625 //3.25in wheel for main. To be confirmed
 #define STD_TWHEEL_RADIUS 1.25 //2.5in wheel for tracking wheels
 
 
+//********************************************************************************//
 /*GLOBAL VARIABLES*/
 
+//V5 controller
 extern Controller ctrl;
+
+//Global angle, rads, positive
 extern double angleG;
+
+//Global x coordinate
 extern double xG;
+
+//Global y coordinate
 extern double yG;
+
+//Array of target x, y, and angle
 extern double xyaT[3]; //is making this an array a good idea or not tbh not sure
+
+//Observed heading of robot, rads
 extern double heading; //may end up useless
+
+//global slowmode speed multiplier
 extern double speedmultiplier;
+
+//global hardware interface layers
 extern odometrycontroller odo;
 extern motorw kiwimotors[];
 extern basecontroller base;
+//TBD: add all the other controllers
 
+
+//********************************************************************************//
 /*UTLITITY FUNCTIONS*/
 
 //for some reason, sort() is broken so i have to diy something,
 //This directly sorts the inputted member, no returns
 extern void insertionsort(double arr[]);
+
 //determinebiggest: returns biggest number, not absolute
 extern double determinebiggest(double a, double b);
+
 //isposorneg: returns 1 or -1 depending on if the value is positive or not
 extern double isposorneg(double input);
+
 //getrelrad: assumes positive radians, whereby 90deg right is 0
 extern double getrelrad(double crad, double trad);
+
 //rottodist: converts radians into distance based on the radius of rotator
 extern double rottodist(double rad, double radius);
 
 
+//********************************************************************************//
 /*CLASS DECLARATIONS*/
 
 //curveS: a single S curve
@@ -157,16 +185,17 @@ struct motorf{
   double rotratio, tgt;
   double curpos = 0;
   double constraints[2];
+  double uniquespeedscale;
   controller_digital_e_t* button;
   bool toggleorhold = true; //false is toggle, hold is true
   bool islinked = false;
   PID IntPID; //how do I full copy? the current method is bloaty
   motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, controller_digital_e_t but[]):IntPID(scalers, ms)
-  {mot = &usedmotor; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2];}
+  {mot = &usedmotor; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
   motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms)
-  {mot = &usedmotor; linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true;}
+  {mot = &usedmotor; linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true; rr[3] = uniquespeedscale;}
   motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms)
-  {mot = &usedmotor; button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2];}
+  {mot = &usedmotor; button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
   //PID_MOVE_TARGET: sets PID target
   void PID_MOVE_TARGET(double tt){
     tgt = tt;
@@ -183,8 +212,8 @@ struct motorf{
     updateangle();
     PID_MOVE_TARGET(curpos);
     if (toggleorhold){
-      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1])) {mot->move(speedmultiplier*127); return;}
-      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1])) {mot->move(-speedmultiplier*127); return;}
+      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1])) {mot->move(uniquespeedscale*speedmultiplier*127); return;}
+      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1])) {mot->move(uniquespeedscale*-speedmultiplier*127); return;}
       PID_MOVE_CYCLE();
       return;
     }else{
@@ -257,7 +286,7 @@ struct odometrycontroller{
     double xN = chordlength*cos(angleG)+HD*sin(angleG+(relangle/2)); //15% this and below work
     double yN = chordlength*sin(angleG)+HD*cos(angleG+(relangle/2));
     xG+=xN; yG+=yN;
-    heading = atan(yN/xN); //this may need to be mellowed out a bit, a new heading every time can be very noisy
+    heading = fmod(atan(yN/xN),(2*M_PI)); //this may need to be mellowed out a bit, a new heading every time can be very noisy
     angleG = fmod((angleG+relangle),(2*M_PI)); //technically sketchy but not really still pls test
     left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
     right->reset();
@@ -276,7 +305,7 @@ struct odometrycontroller{
 
 /*coordcontroller: a wrapper for basecontroller to intepret coordinate grid inputs
     While it 100% is kinda stupid to have this many layers, this is done to allow
-    a bit of distinction between each layer of hardware interaction. This way,
+    a bit of distinction between each layer of sortware interaction. This way,
     troubleshooting, as well as understanding the code can be a bit easier.
 */
 struct coordcontroller{
@@ -293,8 +322,9 @@ struct coordcontroller{
     double yD = yG-tcoords[1]; //relative distances to target
     double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
     mBase->vectormove(xD,yD,rD,
-      axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2)))+
-      axiscontrollers[1].update(rD));
+       //we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
+      fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+
+      fabs(axiscontrollers[1].update(rD)));
     return false;
   }
 };
