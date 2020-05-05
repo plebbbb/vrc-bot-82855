@@ -13,6 +13,7 @@ double speedmultiplier = 1;
 double angleG = 0;
 double xG = 0;
 double yG = 0;
+double heading = angleG;
 
 //ADIEncoder arrays:
 //ADIEncoder format: pin 1, pin2, inversed or not

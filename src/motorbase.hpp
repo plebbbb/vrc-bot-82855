@@ -24,6 +24,7 @@ extern Controller ctrl;
 extern double angleG;
 extern double xG;
 extern double yG;
+extern double heading;
 extern double speedmultiplier;
 extern odometrycontroller odo;
 extern motorw kiwimotors[];
@@ -245,8 +246,10 @@ struct odometrycontroller{
     double HD = rottodist(back->get_value(),STD_TWHEEL_RADIUS);//for calculating lateral shift we make a perpendicular line on our arc
     double relangle = (RD-LD)/(2*ds); //100% this part works
     double chordlength = 2*(RD/relangle)*sin(relangle/2); //85% this part works
-    xG+=chordlength*cos(angleG)+HD*sin(angleG+(relangle/2)); //15% this and below work
-    yG+=chordlength*sin(angleG)+HD*cos(angleG+(relangle/2));
+    double xN = chordlength*cos(angleG)+HD*sin(angleG+(relangle/2)); //15% this and below work
+    double yN = chordlength*sin(angleG)+HD*cos(angleG+(relangle/2));
+    xG+=xN; yG+=yN;
+    heading = atan(yN/xN); //this may need to be mellowed out a bit, a new heading every time can be very noisy
     angleG = fmod((angleG+relangle),(2*M_PI)); //technically sketchy but not really still pls test
     left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
     right->reset();
@@ -261,4 +264,14 @@ struct odometrycontroller{
     yG = y;
     angleG = r;
   }
+};
+
+/*coordcontroller: a wrapper for basecontroller to intepret coordinate grid inputs
+    While it 100% is kinda stupid to have this many layers, this is done to allow
+    a bit of distinction between each layer of hardware interaction. This way,
+    troubleshooting, as well as understanding the code can be a bit easier.
+*/
+struct coordcontroller{
+  basecontroller* mBase;
+
 };
