@@ -8,14 +8,18 @@
   with rotation.
 */
 
+
+//********************************************************************************//
 //Variables:
 double speedmultiplier = 1;
 double angleG = 0;
 double xG = 0;
 double yG = 0;
 double heading = angleG;
-double xyT[3] = {0,0,angleG};
+double xyaT[3] = {0,0,angleG};
 
+
+//********************************************************************************//
 //ADIEncoder arrays:
 //ADIEncoder format: pin 1, pin2, inversed or not
 //Array format: Left, Right, Back
@@ -25,6 +29,8 @@ ADIEncoder odencoders[3] = {
   ADIEncoder(4,5,false)
 };
 
+
+//********************************************************************************//
 //motorw arrays:
 //motorw format: pin, inv dir, orientation, wheel size
 motorw kiwimotors[] = {
@@ -34,11 +40,48 @@ motorw kiwimotors[] = {
 };
 
 
-//controllers:
+//********************************************************************************//
+//PID Variables
+
+//********************************************************************************//
+//PIDKvals format: Pk, Ik, Dk
+double PIDKvals[][3] = {
+  {1,1,1}
+};
+
+//********************************************************************************//
+/*PIDKvals format:
+S-curve enable/disable,
+fractional I enable/disable,
+I hardstop at target enable/disable*/
+bool PIDSvals[][3] = {
+  {false,false,true}
+};
+
+//********************************************************************************//
+//PIDL values: PID hard limit, I value hard limit
+double PIDLvalues[][2] = {
+  {100,50}
+};
+
+//********************************************************************************//
+//PID controllers
+//constructor scheme: PIDKvals, PIDSvals, PIDLvals, (OPTIONAL)dualScurve
+
+//PID for base navigation
+PID bPID[] = {
+  PID(PIDKvals[0],PIDSvals[0],PIDKvals[0]),
+  PID(PIDKvals[0],PIDSvals[0],PIDKvals[0])
+};
+
+//********************************************************************************//
+//actual controllers
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base(kiwimotors);
+coordcontroller mover(base,bPID,xyaT);
 
+//********************************************************************************//
 //functions:
 double determinebiggest(double a, double b){
   if (a>b) return a;
@@ -61,3 +104,23 @@ double getrelrad(double crad, double trad){
 double rottodist(double rad, double radius){
   return rad*radius;
 }
+
+//this is solely for convience -
+//NGL tho for everyone who already has to use radians, just get used to them
+double degtorad(double deg){
+  return fmod(deg*(M_PI/180),2*M_PI);
+};
+
+//********************************************************************************//
+/*auton procedures:
+procedure documentation:
+  x coord, y coord, angle target... TBA
+*/
+
+//postionsetTEST: Benchmark test to ensure the functionality of the motors
+double positionsetTEST[][3] = {
+  {100,100,1},
+  {200,100,2},
+  {50,50,2*M_PI},
+  {-25,200,(5*M_PI)/3}
+};

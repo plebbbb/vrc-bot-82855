@@ -17,6 +17,8 @@ struct odometrycontroller;
 struct basecontroller;
 struct motorf;
 struct dualScurve;
+struct curveS;
+struct coordcontroller;
 
 
 //********************************************************************************//
@@ -53,10 +55,23 @@ extern double heading; //may end up useless
 //global slowmode speed multiplier
 extern double speedmultiplier;
 
+//array of position sets for auton to reach, to be revised upon design completion
+extern double positionsetTEST[][3];
+
+//PID template values
+extern double PIDKvals[][3];
+extern bool PIDSvals[][3];
+extern double PIDLvalues[][2];
+
+//PID template instances
+extern PID bPID[];
+
 //global hardware interface layers
 extern odometrycontroller odo;
 extern motorw kiwimotors[];
+extern motorw xdrivemotors[];
 extern basecontroller base;
+extern coordcontroller mover;
 //TBD: add all the other controllers
 
 
@@ -64,7 +79,8 @@ extern basecontroller base;
 /*UTLITITY FUNCTIONS*/
 
 //for some reason, sort() is broken so i have to diy something,
-//This directly sorts the inputted member, no returns
+/*NOTE: USING THIS IS ULTRA RISKY DUE TO DIRECTLY SORTING THE ARR
+MAKE A NON POINTER COPY AND INSERTIONSORT THAT INSTEAD*/
 extern void insertionsort(double arr[]);
 
 //determinebiggest: returns biggest number, not absolute
@@ -79,6 +95,8 @@ extern double getrelrad(double crad, double trad);
 //rottodist: converts radians into distance based on the radius of rotator
 extern double rottodist(double rad, double radius);
 
+//degtorad: for user convience - converts degrees into radians
+extern double degtorad(double deg);
 
 //********************************************************************************//
 /*CLASS DECLARATIONS*/
@@ -138,12 +156,12 @@ private:
 
   double lasterror = 0;
 public:
-  PID(double scalers[], bool ms[]){
-    ratios = scalers; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = ms[3]; maxIlimit = ms[4];
+  PID(double scalers[], bool ms[], double limits[]){
+    ratios = scalers; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
   //note: if dualScurve is to be used, input percentage to target values
-  PID(double scalers[], bool ms[], dualScurve curve){
-    ratios = scalers; Scurve = &curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = ms[3]; maxIlimit = ms[4];
+  PID(double scalers[], bool ms[], double limits[], dualScurve curve){
+    ratios = scalers; Scurve = &curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
   //sets a new target for the loop w/o resetting PIDa
   void set_tgt_soft(double tgt){
@@ -178,31 +196,33 @@ public:
     - Double button hold - functioning
     - Joystick axis - not to be done unless nescessary
   - Automated background operation based on sensor inputs
-*/
+*/ //TBD - make troubleshooting tree for motor tuning
 struct motorf{
   ADIEncoder* linkedencoder;
   Motor* mot; //this might make a mess, but its only pointed to once so it's ok
   double rotratio, tgt;
   double curpos = 0;
-  double constraints[2];
+  double constraints[2]; //index 0: upper constraint, index 1: lower constraint
   double uniquespeedscale;
   controller_digital_e_t* button;
   bool toggleorhold = true; //false is toggle, hold is true
   bool islinked = false;
-  PID IntPID; //how do I full copy? the current method is bloaty
-  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, controller_digital_e_t but[]):IntPID(scalers, ms)
+  PID IntPID; //how do I full copy properly? the current method is bloaty
+  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, controller_digital_e_t but[]):IntPID(scalers, ms, limits)
   {mot = &usedmotor; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
-  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms)
+  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms, limits)
   {mot = &usedmotor; linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true; rr[3] = uniquespeedscale;}
-  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms)
+  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms, limits)
   {mot = &usedmotor; button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
   //PID_MOVE_TARGET: sets PID target
+  //Note: the current auton system avoids the usage of this system
   void PID_MOVE_TARGET(double tt){
     tgt = tt;
     IntPID.set_tgt_clean(tt);
   }
   //PID_MOVE_CYCLE: One increment PID update system, returns movement completion
   bool PID_MOVE_CYCLE(){
+    updateangle();
     mot->move(IntPID.update(curpos));
     if (fabs(tgt-curpos) < 2) return true;
     return false;
@@ -212,8 +232,8 @@ struct motorf{
     updateangle();
     PID_MOVE_TARGET(curpos);
     if (toggleorhold){
-      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1])) {mot->move(uniquespeedscale*speedmultiplier*127); return;}
-      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1])) {mot->move(uniquespeedscale*-speedmultiplier*127); return;}
+      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1]) && curpos < constraints[0]) {mot->move(uniquespeedscale*speedmultiplier*127); return;}
+      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1]) && curpos > constraints[1]) {mot->move(uniquespeedscale*-speedmultiplier*127); return;}
       PID_MOVE_CYCLE();
       return;
     }else{
