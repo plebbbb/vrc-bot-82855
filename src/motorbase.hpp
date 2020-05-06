@@ -1,50 +1,104 @@
 #include "main.h"
 using namespace pros;
+/*
+TO BE DONES:
+  1. ORGANIZE EVERYTHING HERE INTO THEIR OWN RESPECTIVE .hpp files,
+     I think we will keep initilizations centalized, maybe moved to main.cpp
+  2. FINISH ALL CLASS DEFINITIONS
+*/
+
+
+//********************************************************************************//
 /*ADVANCE DECLARATIONS*/
 
+class PID;
 struct motorw;
 struct odometrycontroller;
 struct basecontroller;
-class PID;
 struct motorf;
 struct dualScurve;
+struct curveS;
+struct coordcontroller;
 
+
+//********************************************************************************//
 /*GLOBAL DEFINITIONS*/
 //in inches or rads
 
 #define Y_AXIS_TWHEEL_OFFSET 10 //offset from center line of the y axis tracking sheel
 #define X_AXIS_TWHEEL_OFFSET 7.5 //not being used currently. we'd need another horz wheel for that
-#define STD_WHEEL_RADIUS 1.875 //3.75in wheel
-#define STD_TWHEEL_RADIUS 1.25 //2.5in wheel
+#define STD_WHEEL_RADIUS 1.625 //3.25in wheel for main. To be confirmed
+#define STD_TWHEEL_RADIUS 1.25 //2.5in wheel for tracking wheels
 
 
+//********************************************************************************//
 /*GLOBAL VARIABLES*/
 
+//V5 controller
 extern Controller ctrl;
+
+//Global angle, rads, positive
 extern double angleG;
+
+//Global x coordinate
 extern double xG;
+
+//Global y coordinate
 extern double yG;
+
+//Array of target x, y, and angle
+extern double xyaT[3]; //is making this an array a good idea or not tbh not sure
+
+//Observed heading of robot, rads
+extern double heading; //may end up useless
+
+//global slowmode speed multiplier
 extern double speedmultiplier;
+
+//array of position sets for auton to reach, to be revised upon design completion
+extern double positionsetTEST[][3];
+
+//PID template values
+extern double PIDKvals[][3];
+extern bool PIDSvals[][3];
+extern double PIDLvalues[][2];
+
+//PID template instances
+extern PID bPID[];
+
+//global hardware interface layers
 extern odometrycontroller odo;
 extern motorw kiwimotors[];
+extern motorw xdrivemotors[];
 extern basecontroller base;
+extern coordcontroller mover;
+//TBD: add all the other controllers
 
 
+//********************************************************************************//
 /*UTLITITY FUNCTIONS*/
 
 //for some reason, sort() is broken so i have to diy something,
-//This directly sorts the inputted member, no returns
+/*NOTE: USING THIS IS ULTRA RISKY DUE TO DIRECTLY SORTING THE ARR
+MAKE A NON POINTER COPY AND INSERTIONSORT THAT INSTEAD*/
 extern void insertionsort(double arr[]);
+
 //determinebiggest: returns biggest number, not absolute
 extern double determinebiggest(double a, double b);
+
 //isposorneg: returns 1 or -1 depending on if the value is positive or not
 extern double isposorneg(double input);
+
 //getrelrad: assumes positive radians, whereby 90deg right is 0
 extern double getrelrad(double crad, double trad);
+
 //rottodist: converts radians into distance based on the radius of rotator
 extern double rottodist(double rad, double radius);
 
+//degtorad: for user convience - converts degrees into radians
+extern double degtorad(double deg);
 
+//********************************************************************************//
 /*CLASS DECLARATIONS*/
 
 //curveS: a single S curve
@@ -70,6 +124,7 @@ struct dualScurve{
 
 /*PID: generic PID system*/
 //NOTE: HAS NOT BEEN TESTED PLS TEST
+//ANOTHER NOTE: DEFAULT TGT = 0
 class PID{
 private:
   /*Integral mode configurations:
@@ -101,12 +156,12 @@ private:
 
   double lasterror = 0;
 public:
-  PID(double scalers[], bool ms[]){
-    ratios = scalers; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = ms[3]; maxIlimit = ms[4];
+  PID(double scalers[], bool ms[], double limits[]){
+    ratios = scalers; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
   //note: if dualScurve is to be used, input percentage to target values
-  PID(double scalers[], bool ms[], dualScurve curve){
-    ratios = scalers; Scurve = &curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = ms[3]; maxIlimit = ms[4];
+  PID(double scalers[], bool ms[], double limits[], dualScurve curve){
+    ratios = scalers; Scurve = &curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
   //sets a new target for the loop w/o resetting PIDa
   void set_tgt_soft(double tgt){
@@ -141,30 +196,33 @@ public:
     - Double button hold - functioning
     - Joystick axis - not to be done unless nescessary
   - Automated background operation based on sensor inputs
-*/
+*/ //TBD - make troubleshooting tree for motor tuning
 struct motorf{
   ADIEncoder* linkedencoder;
   Motor* mot; //this might make a mess, but its only pointed to once so it's ok
   double rotratio, tgt;
   double curpos = 0;
-  double constraints[2];
+  double constraints[2]; //index 0: upper constraint, index 1: lower constraint
+  double uniquespeedscale;
   controller_digital_e_t* button;
   bool toggleorhold = true; //false is toggle, hold is true
   bool islinked = false;
-  PID IntPID; //how do I full copy? the current method is bloaty
-  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, controller_digital_e_t but[]):IntPID(scalers, ms)
-  {mot = &usedmotor; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2];}
-  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms)
-  {mot = &usedmotor; linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true;}
-  motorf(double scalers[], bool ms[], double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms)
-  {mot = &usedmotor; button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2];}
+  PID IntPID; //how do I full copy properly? the current method is bloaty
+  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, controller_digital_e_t but[]):IntPID(scalers, ms, limits)
+  {mot = &usedmotor; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
+  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms, limits)
+  {mot = &usedmotor; linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true; rr[3] = uniquespeedscale;}
+  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms, limits)
+  {mot = &usedmotor; button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
   //PID_MOVE_TARGET: sets PID target
+  //Note: the current auton system avoids the usage of this system
   void PID_MOVE_TARGET(double tt){
     tgt = tt;
     IntPID.set_tgt_clean(tt);
   }
   //PID_MOVE_CYCLE: One increment PID update system, returns movement completion
   bool PID_MOVE_CYCLE(){
+    updateangle();
     mot->move(IntPID.update(curpos));
     if (fabs(tgt-curpos) < 2) return true;
     return false;
@@ -174,8 +232,8 @@ struct motorf{
     updateangle();
     PID_MOVE_TARGET(curpos);
     if (toggleorhold){
-      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1])) {mot->move(speedmultiplier*127); return;}
-      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1])) {mot->move(-speedmultiplier*127); return;}
+      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1]) && curpos < constraints[0]) {mot->move(uniquespeedscale*speedmultiplier*127); return;}
+      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1]) && curpos > constraints[1]) {mot->move(uniquespeedscale*-speedmultiplier*127); return;}
       PID_MOVE_CYCLE();
       return;
     }else{
@@ -245,8 +303,10 @@ struct odometrycontroller{
     double HD = rottodist(back->get_value(),STD_TWHEEL_RADIUS);//for calculating lateral shift we make a perpendicular line on our arc
     double relangle = (RD-LD)/(2*ds); //100% this part works
     double chordlength = 2*(RD/relangle)*sin(relangle/2); //85% this part works
-    xG+=chordlength*cos(angleG)+HD*sin(angleG+(relangle/2)); //15% this and below work
-    yG+=chordlength*sin(angleG)+HD*cos(angleG+(relangle/2));
+    double xN = chordlength*cos(angleG)+HD*sin(angleG+(relangle/2)); //15% this and below work
+    double yN = chordlength*sin(angleG)+HD*cos(angleG+(relangle/2));
+    xG+=xN; yG+=yN;
+    heading = fmod(atan(yN/xN),(2*M_PI)); //this may need to be mellowed out a bit, a new heading every time can be very noisy
     angleG = fmod((angleG+relangle),(2*M_PI)); //technically sketchy but not really still pls test
     left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
     right->reset();
@@ -260,5 +320,31 @@ struct odometrycontroller{
     xG = x;
     yG = y;
     angleG = r;
+  }
+};
+
+/*coordcontroller: a wrapper for basecontroller to intepret coordinate grid inputs
+    While it 100% is kinda stupid to have this many layers, this is done to allow
+    a bit of distinction between each layer of sortware interaction. This way,
+    troubleshooting, as well as understanding the code can be a bit easier.
+*/
+struct coordcontroller{
+  basecontroller* mBase;
+  PID* axiscontrollers; //the initial plan called for 3 PID controllers to allow for smooth motion curves, but for now we have a direct line approach
+  double* tcoords; //we are gonna try a potentially interesting approach, where we dont call coordcontroller but instead change the tgt coords directly
+  coordcontroller(basecontroller a, PID b[2], double t[3]){mBase = &a; axiscontrollers = b; tcoords = t;}
+  /*returns true when target is reached
+    potential camera implementation: overload update with version that replaces r and perp with camera controls
+    this overload would input the desired color profile that the camera is looking for.
+    note that constructor must be updated for this*/
+  bool update(){
+    double xD = xG-tcoords[0]; //relative distances to target
+    double yD = yG-tcoords[1]; //relative distances to target
+    double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
+    mBase->vectormove(xD,yD,rD,
+       //we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
+      fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+
+      fabs(axiscontrollers[1].update(rD)));
+    return false;
   }
 };
