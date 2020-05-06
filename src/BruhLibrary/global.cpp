@@ -1,5 +1,5 @@
 #include "main.h"
-#include "motorbase.hpp"
+#include "global.hpp"
 // This cpp is for the declration of extern objects from motorbase.hpp
 
 /*a tip making motorw arrays:
