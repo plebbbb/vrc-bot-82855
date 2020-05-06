@@ -36,6 +36,6 @@ void autonomous(){
       (motorf object).PID_MOVE_TARGET(positionsetTEST[cycle][specific index]);
       */
       delay(10);
-    };
+    }
   }
 }
