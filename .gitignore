@@ -12,6 +12,11 @@
 *.userosscache
 *.sln.docstates
 *.d
+common.mk
+compile_commands.json
+project.pros
+Makefile
+firmware
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
