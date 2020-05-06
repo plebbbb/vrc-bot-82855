@@ -1,6 +1,6 @@
 #include "main.h"
 #include "global.hpp"
-// This cpp is for the declration of extern objects from motorbase.hpp
+// This cpp is for the declration of extern objects from global.hpp
 
 /*a tip making motorw arrays:
   it is suggested to not inverse motor direction, and instead figure out the
@@ -109,18 +109,4 @@ double rottodist(double rad, double radius){
 //NGL tho for everyone who already has to use radians, just get used to them
 double degtorad(double deg){
   return fmod(deg*(M_PI/180),2*M_PI);
-};
-
-//********************************************************************************//
-/*auton procedures:
-procedure documentation:
-  x coord, y coord, angle target... TBA
-*/
-
-//postionsetTEST: Benchmark test to ensure the functionality of the motors
-double positionsetTEST[][3] = {
-  {100,100,1},
-  {200,100,2},
-  {50,50,2*M_PI},
-  {-25,200,(5*M_PI)/3}
 };

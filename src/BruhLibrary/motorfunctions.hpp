@@ -1,8 +1,7 @@
 #include "main.h"
-#include "utilityfunctions.hpp"
-#include "navigationfunctions.hpp"
 #include "pid.hpp"
-#include "utilityfunctions.hpp"
+#include "globalvar.hpp"
+//#include "utilityfunctions.hpp"
 using namespace pros;
 /*
 TO BE DONES:

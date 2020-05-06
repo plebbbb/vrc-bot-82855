@@ -1,5 +1,5 @@
 #include "main.h"
-#include "global.hpp"
+#include "BruhLibrary/global.hpp"
 using namespace pros;
 void initialize() {}
 void disabled() {}

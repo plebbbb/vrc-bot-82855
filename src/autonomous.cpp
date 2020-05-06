@@ -1,5 +1,5 @@
 #include "main.h"
-#include "global.hpp"
+#include "BruhLibrary/global.hpp"
 /*
 A guide to the current autonomous approach
   1. Commands are to be updated via adjusting positional variables
@@ -11,6 +11,20 @@ cool. In the 65% chance this approach is risky, we can switch to a function base
 system
 
 */
+
+//********************************************************************************//
+/*auton procedures:
+procedure documentation:
+  x coord, y coord, angle target... TBA
+*/
+
+//postionsetTEST: Benchmark test to ensure the functionality of the motors
+double positionsetTEST[][3] = {
+  {100,100,1},
+  {200,100,2},
+  {50,50,2*M_PI},
+  {-25,200,(5*M_PI)/3}
+};
 
 //********************************************************************************//
 void autonomous(){
