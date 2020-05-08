@@ -55,8 +55,8 @@ struct coordcontroller{
     this overload would input the desired color profile that the camera is looking for.
     note that constructor must be updated for this*/
   bool update(){
-    double xD = xG-tcoords[0]; //relative distances to target
-    double yD = yG-tcoords[1]; //relative distances to target
+    double xD = (xG-tcoords[0])*sin(angleG); //relative distances to target
+    double yD = (yG-tcoords[1])*cos(angleG); //relative distances to target
     double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
     mBase->vectormove(xD,yD,rD,
        //we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
