@@ -15,17 +15,19 @@ TO BE DONES:
   - Internal angle scaling system
   - Built in encoder based control
   - Multiple input control schemes
-    - Toggles - currently not added in
+    - Toggles - toggle between 2 preset angles currently - this is the only mode with S curves enabled
     - Double button hold - functioning
     - Joystick axis - not to be done unless nescessary
   - Automated background operation based on sensor inputs
-*/ //TBD - make troubleshooting tree for motor tuning
+*/ //TBD - make troubleshooting tree for motor tuning, also make a damn interface for this already its so messy as is
 struct motorf{
   ADIEncoder* linkedencoder;
   Motor* mot; //this might make a mess, but its only pointed to once so it's ok
   double rotratio, tgt;
   double curpos = 0;
   double constraints[2]; //index 0: upper constraint, index 1: lower constraint
+  double* toggletargets; // an array of targets for the toggle to switch between
+  bool target = 0;
   double uniquespeedscale;
   controller_digital_e_t* button;
   bool toggleorhold = true; //false is toggle, hold is true
@@ -35,7 +37,7 @@ struct motorf{
   {mot = &usedmotor; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
   motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms, limits)
   {mot = &usedmotor; linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true; rr[3] = uniquespeedscale;}
-  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms, limits)
+  motorf(double scalers[], bool ms[], double limits[], dualScurve es, double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms, limits, es)
   {mot = &usedmotor; button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
   //PID_MOVE_TARGET: sets PID target
   //Note: the current auton system avoids the usage of this system
@@ -55,12 +57,21 @@ struct motorf{
     updateangle();
     PID_MOVE_TARGET(curpos);
     if (toggleorhold){
-      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1]) && curpos < constraints[0]) {mot->move(uniquespeedscale*speedmultiplier*127); return;}
-      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1]) && curpos > constraints[1]) {mot->move(uniquespeedscale*-speedmultiplier*127); return;}
+      if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1]) && curpos < constraints[0])
+        {mot->move(uniquespeedscale*speedmultiplier*127); return;}
+      if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1]) && curpos > constraints[1])
+        {mot->move(uniquespeedscale*-speedmultiplier*127); return;}
       PID_MOVE_CYCLE();
       return;
     }else{
-      //TBD: figure out toggle movement
+      if (ctrl.get_digital_new_press(*button)) {
+        target = !target; PID_MOVE_TARGET(toggletargets[(int)target]);
+        //the above cycling for the array is really stupid but it should work
+        //besides, I can't think of cases which we will need more than 2 angle presets
+      };
+      updateangle();
+      PID_MOVE_CYCLE();
+      //remember that we have S curves on the PID so this should be less shakey than manual movement if done right
     }
   }
   void updateangle(){

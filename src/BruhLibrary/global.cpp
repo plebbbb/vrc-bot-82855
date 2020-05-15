@@ -65,13 +65,35 @@ double PIDLvalues[][2] = {
 };
 
 //********************************************************************************//
+//S curve VARIABLES
+//Scurve possible Y range: 0-127, X range: 0-50
+//Get your coefficients from desmos! https://www.desmos.com/calculator/aydhkipdkz
+//Index 0: max spd, Index 1: steepness, Index 2: horizontal offset, Index 3: vertical offset
+//max spd should be always positive!
+double Scurvevals[][4] = {
+  {127,0.2,-24.2,0} //default settings from the desmos link
+};
+
+//S curves
+curveS curves[] = {
+  curveS(Scurvevals[0])
+};
+
+//dualScurve wrapper
+dualScurve curvesets[] = {
+  dualScurve(curves[0]) //default desmos link, flipped past 50%
+};
+
+
+//********************************************************************************//
 //PID controllers
 //constructor scheme: PIDKvals, PIDSvals, PIDLvals, (OPTIONAL)dualScurve
 
 //PID for base navigation
 PID bPID[] = {
+  PID(PIDKvals[0],PIDSvals[0],PIDKvals[0]), //no idea what index 0 and 1 are for
   PID(PIDKvals[0],PIDSvals[0],PIDKvals[0]),
-  PID(PIDKvals[0],PIDSvals[0],PIDKvals[0])
+  PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]) //example setup for a motorF
 };
 
 //********************************************************************************//

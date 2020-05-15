@@ -3,23 +3,31 @@
 using namespace pros;
 
 //curveS: a single S curve
+//Constraints(suggested): range: 0 to 50, upwards.  max height 127;
+//TBD, maybe actually calculate proper motion curves later and emulate them with curveS
 class curveS{
   double* vars;
 public:
   curveS(double arr[]){vars = arr;}
   double getval(double pos){
-    return vars[0]/(1+pow(M_E,-vars[1]*(pos-vars[2])));
+    return (vars[0]-vars[3])/(1+pow(M_E,-vars[1]*(pos-vars[2]))) + vars[3];
   }
 };
 
 //dualScurve: a set of 2 S curves made to aproximate what motion profiling might look like
+/*dualScurve should extend curveS, also should be an interface ngl so we can use both one or two
+the current pointer access method is ok for these b/c they dont store anything motor-specific,
+its literally just a formula*/
 struct dualScurve{
-  curveS* a;
-  curveS* b;
+  curveS* a = NULL;
+  curveS* b = NULL;
   dualScurve(curveS c, curveS d){a=&c; b=&d;}
+  dualScurve(curveS c){a=&c;}
   double getval(double pos){
     if (pos < 50) return a->getval(pos);
-    else return b->getval(pos);
+    else if (b == NULL) return a->getval(50-pos);
+    return b->getval(50-pos);
+    //for the part past 50%, we flip the curveS, so that we only need one curve from 0-50 for each different profile
   };
 };
 
