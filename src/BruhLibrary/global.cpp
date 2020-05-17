@@ -60,7 +60,7 @@ bool PIDSvals[][3] = {
 
 //********************************************************************************//
 //PIDL values: PID hard limit, I value hard limit
-double PIDLvalues[][2] = {
+double PIDLvals[][2] = {
   {100,50}
 };
 
@@ -91,10 +91,13 @@ dualScurve curvesets[] = {
 
 //PID for base navigation
 PID bPID[] = {
-  PID(PIDKvals[0],PIDSvals[0],PIDKvals[0]), //no idea what index 0 and 1 are for
-  PID(PIDKvals[0],PIDSvals[0],PIDKvals[0]),
-  PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]) //example setup for a motorF
+  PID(PIDKvals[0],PIDSvals[0],PIDLvals[0]), //no idea what index 0 and 1 are for
+  PID(PIDKvals[0],PIDSvals[0],PIDLvals[0]),
+  PID(PIDKvals[0],PIDSvals[0],PIDLvals[0])
 };
+
+PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]) //example setup for a motorF
+
 
 //********************************************************************************//
 //actual controllers

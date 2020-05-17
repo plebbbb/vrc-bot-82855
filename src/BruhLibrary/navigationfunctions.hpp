@@ -41,7 +41,7 @@ struct odometrycontroller{
 };
 
 /*coordcontroller: a wrapper for basecontroller to intepret coordinate grid inputs
-    While it 100% is kinda stupid to have this many layers, this is done to allow
+    While it 100% is kinda stupid to hsave this many layers, this is done to allow
     a bit of distinction between each layer of sortware interaction. This way,
     troubleshooting, as well as understanding the code can be a bit easier.
 */
@@ -55,11 +55,21 @@ struct coordcontroller{
     this overload would input the desired color profile that the camera is looking for.
     note that constructor must be updated for this*/
   bool update(){
-    double xD = (xG-tcoords[0])*sin(angleG)+(yG-tcoords[1])*sin(angleG+M_PI/2); //relative distances to target
-    double yD = (yG-tcoords[1])*cos(angleG+M_PI/2)+(xG-tcoords[0])*cos(angleG); //relative distances to target
+    double yO = 0;
+    if ((sqrt(pow(tcoords[0],2)+pow(tcoords[0],2))) > 20) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-tcoords[0],yG-tcoords[1])));
+    //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
+    //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
+    //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
+    double xD = (xG-tcoords[0])*sin(angleG)+(yG-tcoords[1])*cos(angleG)+; //relative distances to target
+    double yD = (yG-tcoords[1])*sin(angleG)+(xG-tcoords[0])*cos(angleG); //relative distances to target
+    //unsure about recent correction from sin(angleG-pi/2) to cos(angleG), the thing is inversed but my initial math is probably wrong
     double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
+    //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
+    xD+=yO*sin(atan2(xD,yD));
+    yD+=yO*cos(atan2(xD,yD));
     mBase->vectormove(xD,yD,rD,
-       //we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
+      //above: unsure about subtracting yO or adding it
+      //we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
       fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+
       fabs(axiscontrollers[1].update(rD)));
     return false;
