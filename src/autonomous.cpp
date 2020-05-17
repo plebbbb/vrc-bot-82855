@@ -41,7 +41,7 @@ void autonomous(){
       //is the for loop cheese? theres the something:something way but
       //idk how that works, nor if its even in C++
       for (int i = 0; i > 3; i++){
-        xyaT[i] = positionsetTEST[cycle][0];
+        xyaT[i] = positionsetTEST[cycle][i];
       }
       /*while the goal was to not use functions, chances are we are gonna
       have to for motorf because I really dont wanna rewrite those constructors*/

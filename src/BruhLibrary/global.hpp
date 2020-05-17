@@ -16,6 +16,12 @@ TO BE DONES:
   2. FINISH ALL CLASS DEFINITIONS
 */
 
+//This is basically a place to put all class objects
+//********************************************************************************//
+
+//Scurve instances
+extern dualScurve curvesets[];
+extern curveS curves[];
 
 //PID template instances
 extern PID bPID[];

@@ -12,6 +12,7 @@ using namespace pros;
 
 //********************************************************************************//
 /*GLOBAL VARIABLES*/
+//TBD - use std::vector when it's actually nescessary instead of spamming so many arrays
 
 //V5 controller
 extern Controller ctrl;
@@ -41,3 +42,6 @@ extern double positionsetTEST[][3];
 extern double PIDKvals[][3];
 extern bool PIDSvals[][3];
 extern double PIDLvalues[][2];
+
+//S curve template values
+extern double Scurvevals[][4];
