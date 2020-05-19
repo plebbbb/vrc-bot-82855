@@ -60,7 +60,7 @@ struct coordcontroller{
     //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
     //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
     //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
-    double xD = (xG-tcoords[0])*sin(angleG)+(yG-tcoords[1])*cos(angleG)+; //relative distances to target
+    double xD = (xG-tcoords[0])*sin(angleG)+(yG-tcoords[1])*cos(angleG); //relative distances to target
     double yD = (yG-tcoords[1])*sin(angleG)+(xG-tcoords[0])*cos(angleG); //relative distances to target
     //unsure about recent correction from sin(angleG-pi/2) to cos(angleG), the thing is inversed but my initial math is probably wrong
     double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
