@@ -96,7 +96,7 @@ PID bPID[] = {
   PID(PIDKvals[0],PIDSvals[0],PIDLvals[0])
 };
 
-PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]) //example setup for a motorF
+PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup for a motorF
 
 
 //********************************************************************************//
