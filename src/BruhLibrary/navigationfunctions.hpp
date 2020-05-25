@@ -1,5 +1,5 @@
 #include "main.h"
-
+#pragma once
 #include "motorfunctions.hpp"
 //#include "pid.hpp"
 //#include "globalvar.hpp"

@@ -1,6 +1,7 @@
 #include "main.h"
 #include "utilityfunctions.hpp"
 using namespace pros;
+#pragma once
 
 //curveS: a single S curve
 //Constraints(suggested): range: 0 to 50, upwards.  max height 127;

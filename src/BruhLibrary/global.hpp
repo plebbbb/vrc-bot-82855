@@ -4,6 +4,8 @@
 //#include "pid.hpp"
 //#include "motorfunctions.hpp"
 #include "navigationfunctions.hpp"
+#include "userinterface.hpp"
+#pragma once
 using namespace pros;
 /*
 TO BE DONES:

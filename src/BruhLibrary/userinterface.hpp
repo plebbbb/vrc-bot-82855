@@ -1,12 +1,12 @@
 #include "main.h"
+#pragma once
 /*it's throwing code errors but thats cuz we have a screwed up header structure where
 if we include this into the main stream with global.hpp, we would have a recursive loop
 of hpp files
 it works in the actual code b/c we include it after global.hpp in main.cpp those*/
 //if u wanna temparaly remove those errors so you can check for actual logic issues,
 //uncomment the line below:
-//#include globalvar.hpp
-
+//#include "global.hpp"
 //this is ripped straght from the old code. Ik it works but its still super sketchy
 //also we may want to work on the delays
 void autonselection() {

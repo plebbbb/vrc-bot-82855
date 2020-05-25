@@ -1,5 +1,7 @@
 #include "main.h"
 using namespace pros;
+#pragma once
+
 //********************************************************************************//
 /*GLOBAL DEFINITIONS*/
 //in inches or rads

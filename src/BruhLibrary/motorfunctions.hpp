@@ -1,6 +1,7 @@
 #include "main.h"
 #include "pid.hpp"
 #include "globalvar.hpp"
+#pragma once
 //#include "utilityfunctions.hpp"
 using namespace pros;
 /*
