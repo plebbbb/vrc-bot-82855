@@ -68,7 +68,7 @@ double PIDLvals[][2] = {
 //S curve VARIABLES
 //Scurve possible Y range: 0-127, X range: 0-50
 //Get your coefficients from desmos! https://www.desmos.com/calculator/aydhkipdkz
-//Index 0: max spd, Index 1: steepness, Index 2: horizontal offset, Index 3: vertical offset
+//Index 0: max spd, Index 1: slope, Index 2: horizontal offset, Index 3: vertical offset
 //max spd should be always positive!
 double Scurvevals[][4] = {
   {127,0.2,-24.2,0} //default settings from the desmos link

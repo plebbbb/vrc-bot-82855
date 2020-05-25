@@ -71,7 +71,40 @@ struct coordcontroller{
       //above: unsure about subtracting yO or adding it
       //we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
       fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+
-      fabs(axiscontrollers[1].update(rD)));
+      fabs(axiscontrollers[1].update(rD))
+    );
+
+
     return false;
   }
+};
+
+/*motionpath:
+    The goal of this is to implement movement paths through multiple points without
+    stopping
+
+    The current method of using a global trajectory array is kinda sketchy to use
+    if we are gonna end up using this approach, but it's probably doable.
+    The trajectory array is going to become an imaginary target though.
+
+    The code design for this will have 3 development stages
+      1. Converting PID speeds into percentage points for S curves, and making
+        the bot not stop after each curve by making the PID percentage be over
+        the entire trajectory
+          This will be done by either:
+            - Making Tcoords into a bait coordinate, and getting axiscontrollers to
+            automatically convert to percentage inside coordcontroller by extending
+            tcoords percent units ahead in the ideal(line) direction (only good for 1.)
+            - Make low key motion profiling and then turn the axis controller from being
+            the primary source of movement into something used to maintain the profiling
+            speed targets
+      2. Adding a speed control when turning corners to minimize shaking from interia(we might skip this)
+      3. Making a curved transision between point to basically eliminate shaking
+*/
+struct motionpath{
+  coordcontroller* controller;
+  double* points; //not sure about how to make a pointer for this 2d array case
+  double percentage;
+  motionpath(coordcontroller b, double* loc){controller = &b; points = loc;}
+
 };
