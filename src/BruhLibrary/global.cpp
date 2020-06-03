@@ -15,6 +15,9 @@ double speedmultiplier = 1;
 double angleG = 0;
 double xG = 0;
 double yG = 0;
+double xR = 0;
+double yR = 0;
+double estspd = 0;
 double heading = angleG;
 double xyaT[3] = {0,0,angleG};
 
@@ -135,3 +138,9 @@ double rottodist(double rad, double radius){
 double degtorad(double deg){
   return fmod(deg*(M_PI/180),2*M_PI);
 };
+
+//sketchy calculator for maximum speed at angle, unsure if it actually works
+double getpropspeed(double perc){
+  double tot;
+  for 
+}

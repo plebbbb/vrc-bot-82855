@@ -22,6 +22,10 @@ struct odometrycontroller{
     double chordlength = 2*(RD/relangle)*sin(relangle/2); //85% this part works
     double xN = chordlength*cos(angleG)+HD*sin(angleG+(relangle/2)); //15% this and below work
     double yN = chordlength*sin(angleG)+HD*cos(angleG+(relangle/2));
+    xR = xN;
+    yR = yN;
+    //50 - we run a 20ms clock, converts to in/seconds
+    estspd = sqrt(xR*xR + yR*yR)*50;
     xG+=xN; yG+=yN;
     heading = fmod(atan(yN/xN),(2*M_PI)); //this may need to be mellowed out a bit, a new heading every time can be very noisy
     angleG = fmod((angleG+relangle),(2*M_PI)); //technically sketchy but not really still pls test
@@ -48,7 +52,7 @@ struct odometrycontroller{
 struct coordcontroller{
   basecontroller* mBase;
   PID* axiscontrollers; //the initial plan called for 3 PID controllers to allow for smooth motion curves, but for now we have a direct line approach
-  double* tcoords; //we are gonna try a potentially interesting approach, where we dont call coordcontroller but instead change the tgt coords directly
+  double* tcoords; //we are gonna try a potentially stupid approach, where we dont call coordcontroller but instead change the tgt coords directly
   coordcontroller(basecontroller a, PID b[2], double t[3]){mBase = &a; axiscontrollers = b; tcoords = t;}
   /*returns true when target is reached
     potential camera implementation: overload update with version that replaces r and perp with camera controls
@@ -77,6 +81,31 @@ struct coordcontroller{
 
     return false;
   }
+
+  //this variation is for usage with motionpaths, where axiscontrollers merely maintains the speed target given by TSP
+  bool update(double TSP){
+    double yO = 0;
+    if ((sqrt(pow(tcoords[0],2)+pow(tcoords[0],2))) > 20) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-tcoords[0],yG-tcoords[1])));
+    //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
+    //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
+    //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
+    double xD = (xG-tcoords[0])*sin(angleG)+(yG-tcoords[1])*cos(angleG); //relative distances to target
+    double yD = (yG-tcoords[1])*sin(angleG)+(xG-tcoords[0])*cos(angleG); //relative distances to target
+    //unsure about recent correction from sin(angleG-pi/2) to cos(angleG), the thing is inversed but my initial math is probably wrong
+    double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
+    //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
+    xD+=yO*sin(atan2(xD,yD));
+    yD+=yO*cos(atan2(xD,yD));
+    mBase->vectormove(xD,yD,rD,
+      //above: unsure about subtracting yO or adding it
+      //below: we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
+      fabs(axiscontrollers[0].update(mBase->getlimits(TSP)-estspd))+
+      fabs(axiscontrollers[1].update(rD))
+    );
+
+
+    return false;
+  }
 };
 
 /*motionpath:
@@ -98,13 +127,34 @@ struct coordcontroller{
             - Make low key motion profiling and then turn the axis controller from being
             the primary source of movement into something used to maintain the profiling
             speed targets
-      2. Adding a speed control when turning corners to minimize shaking from interia(we might skip this)
+      2. Adding a speed control when turning corners to minimize shaking from inertia(we might skip this)
       3. Making a curved transision between point to basically eliminate shaking
+
+      Current implementation: step 1 done, low key motion profiling implementation
 */
 struct motionpath{
   coordcontroller* controller;
-  double* points; //not sure about how to make a pointer for this 2d array case
-  double percentage;
-  motionpath(coordcontroller b, double* loc){controller = &b; points = loc;}
-
+  double** points; //not sure about how to make a pointer for this 2d array case
+  dualScurve* tcurve;
+  double percentage = 0;
+  double oldlen = 0;
+  int Tindex = 0;
+  bool isfullycomplete = false;
+  motionpath(coordcontroller b, double** loc){controller = &b; points = loc;
+    oldlen = sqrt(pow(xG-points[Tindex][0],2) + pow(xG-points[Tindex][1],2));
+  }
+  bool update(){
+    double TSP = points[Tindex][3];
+    double newlen = sqrt(pow(xG-points[Tindex][0],2) + pow(xG-points[Tindex][1],2));
+    percentage = ((newlen/oldlen)*100);
+    if (Tindex == sizeof(points)-1 && percentage >= 50) TSP = tcurve->getval(percentage);
+    if (Tindex == 0 && percentage <= 50) TSP = tcurve->getval(percentage);
+    if (controller->update(TSP)){
+      Tindex++;
+      if (Tindex == sizeof(points)) isfullycomplete = true;
+      oldlen = sqrt(pow(xG-points[Tindex][0],2) + pow(xG-points[Tindex][1],2));
+      return true;
+    }
+    return false;
+  }
 };
