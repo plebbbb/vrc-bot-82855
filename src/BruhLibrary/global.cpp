@@ -71,7 +71,7 @@ double PIDLvals[][2] = {
 //Index 0: max spd, Index 1: slope, Index 2: horizontal offset, Index 3: vertical offset
 //max spd should be always positive!
 double Scurvevals[][4] = {
-  {127,0.2,-24.2,0} //default settings from the desmos link
+  {127,0.2,24.2,0} //default settings from the desmos link
 };
 
 //S curves
