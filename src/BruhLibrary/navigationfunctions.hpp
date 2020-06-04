@@ -77,7 +77,7 @@ struct coordcontroller{
       fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+
       fabs(axiscontrollers[1].update(rD))
     );
-
+    if (fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+fabs(axiscontrollers[1].update(rD)) < 15) return true;
 
     return false;
   }
@@ -102,7 +102,7 @@ struct coordcontroller{
       fabs(axiscontrollers[0].update(mBase->getlimits(TSP)-estspd))+
       fabs(axiscontrollers[1].update(rD))
     );
-
+    if (fabs(axiscontrollers[0].update(mBase->getlimits(TSP)-estspd))+fabs(axiscontrollers[1].update(rD)) < 15) return true;
 
     return false;
   }
