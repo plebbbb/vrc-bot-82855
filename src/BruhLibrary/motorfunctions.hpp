@@ -116,21 +116,10 @@ struct basecontroller{
     //above: very sketchy power distrubtion formula between rotation and translation
     for (int i = 0; i < sizeof(MAP); i++){
       //calculation for the power of each motor, see discord #design-ideas for formula
-      MAP[i].mot = spd*127*((-x*MAP[i].sinV + y*MAP[i].cosV)*(1-rotationalratio) + rotationalratio*r);
+      MAP[i].mot.move_velocity(spd*BASE_MOTOR_RPM*((-x*MAP[i].sinV + y*MAP[i].cosV)*(1-rotationalratio) + rotationalratio*r));
       //above: rotationalratio code made even more sketchier, it doesnt even scale correctly I think
+      //also above: haha imagine using DIY position pid when you can use already tuned velocity PID
     };
-  }
-
-  double getlimits(double perc){
-    double maxvel = 0;
-    for (int i = 0; i < sizeof(MAP); i++){
-      double x = cos(angleG-heading); //relative anglem performance calculation
-      double y = sin(angleG-heading);
-      if ((-x*MAP[i].sinV + y*MAP[i].cosV) > maxvel){
-          maxvel = (-x*MAP[i].sinV + y*MAP[i].cosV);
-      }
-    }
-    return rottodist((BASE_MOTOR_RPM/60)*M_PI*2, STD_WHEEL_RADIUS)*maxvel*perc;
   }
 };
 

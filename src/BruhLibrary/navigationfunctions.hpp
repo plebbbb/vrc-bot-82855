@@ -77,8 +77,7 @@ struct coordcontroller{
       fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+
       fabs(axiscontrollers[1].update(rD))
     );
-
-
+    if (fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+fabs(axiscontrollers[1].update(rD)) < 15) return true;
     return false;
   }
 
@@ -91,7 +90,7 @@ struct coordcontroller{
     double yD = (yG-tcoords[1])*sin(angleG)+(xG-tcoords[0])*cos(angleG); //relative distances to target
     //unsure about recent correction from sin(angleG-pi/2) to cos(angleG), the thing is inversed but my initial math is probably wrong
     double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
-    if ((sqrt(pow(xD,2)+pow(yD,2))) > 20) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-tcoords[0],yG-tcoords[1])));
+    if ((sqrt(pow(xD,2)+pow(yD,2))) > 5) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-tcoords[0],yG-tcoords[1])));
     //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
     //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
     xD+=yO*sin(atan2(xD,yD));
@@ -99,11 +98,10 @@ struct coordcontroller{
     mBase->vectormove(xD,yD,rD,
       //above: unsure about subtracting yO or adding it
       //below: we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
-      fabs(axiscontrollers[0].update(mBase->getlimits(TSP)-estspd))+
+      fabs(axiscontrollers[0].update(TSP))+
       fabs(axiscontrollers[1].update(rD))
     );
-
-
+    if (fabs(axiscontrollers[0].update(TSP))+fabs(axiscontrollers[1].update(rD)) < 15) return true;
     return false;
   }
 };
