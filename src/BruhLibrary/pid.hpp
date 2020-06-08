@@ -43,10 +43,10 @@ private:
   double* binomialfactors; //double may be too small ngl
   int size; //coordinate size
 public:
-  //sinfo and einfo format: x, y, angle(rads), einfo 4th param is
+  //sinfo and einfo format: x, y, angle(rads), einfo 4th param is target end heading
   beziernp(double sinfo[3], double einfo[3], double offsetcoords[][2]){
     coords = (double**)new double[ //I have no idea how casting here is somehow legal
-    2 + sizeof(offsetcoords)/sizeof(offsetcoords[0])][2]; //manual calculation of size
+    4 + sizeof(offsetcoords)/sizeof(offsetcoords[0])][2]; //manual calculation of size
     size = sizeof(coords)/sizeof(coords[0]);
     coords[0][0] = sinfo[0];
     coords[0][1] = sinfo[1];
@@ -54,18 +54,24 @@ public:
     by applying a transformation in the current direction of movement*/
     coords[1][0] = sinfo[0]+cos(sinfo[2])*estspd*vscalefac;
     coords[1][1] = sinfo[1]+sin(sinfo[2])*estspd*vscalefac;
+    coords[size-1][0] = sinfo[0]+cos(sinfo[2])*127*vscalefac; //127 is a placeholder
+    coords[size-1][1] = sinfo[1]+sin(sinfo[2])*127*vscalefac;
     coords[size][0] = einfo[0];
     coords[size][1] = einfo[1];
     std::copy(offsetcoords[0],offsetcoords[size-3],coords[1]);//I'm honestly not too sure this works, pls test in eclipse or something
     //above: manual array size calc here cuz idk how to cast this one for .size()
   }
   beziernp(double sinfo[3], double einfo[3]){
-    coords = (double**)new double[2][2];
+    coords = (double**)new double[4][2];
+    size = 4;
     coords[0][0] = sinfo[0];
     coords[0][1] = sinfo[1];
-    //below: these values are here to prevent harsh turns due to existing momentum
+    /*below: these values are here to prevent harsh turns due to existing momentum
+    by applying a transformation in the current direction of movement*/
     coords[1][0] = sinfo[0]+cos(sinfo[2])*estspd*vscalefac;
     coords[1][1] = sinfo[1]+sin(sinfo[2])*estspd*vscalefac;
+    coords[size-1][0] = sinfo[0]+cos(sinfo[2])*127*vscalefac; //127 is a placeholder
+    coords[size-1][1] = sinfo[1]+sin(sinfo[2])*127*vscalefac;
     coords[size][0] = einfo[0];
     coords[size][1] = einfo[1];
   }
@@ -129,12 +135,21 @@ public:
 /*This is a piecewise bezier curve approach using beziernp instances, of which
 will have 4 default offset points each, two for end points, two for heading targets*/
 struct compositebezier{
-  beziernp* patharr;
-  compositebezier(beziernp arr[]){patharr = arr;}
+  std::vector<beziernp> beziers; //ngl shoulda started running vectors a lot sooner
+  int size;
+  //arr config: include the bezier from your current positon too
+  compositebezier(beziernp arr[]){
+    size = sizeof(arr)/sizeof(arr[0])+1;
+    for (int i = 0; i < size; i++) beziers.push_back(arr[i]);
+  }
   //mvcoords config - do not include the current position, only future positions
   //new bezier curve is generated using current point
   compositebezier(double mvcoords[][3]){
-    beziernp filler[2];
+    size = sizeof(mvcoords)/sizeof(mvcoords[0])+1;
+    beziers.push_back(beziernp(mvcoords[0],mvcoords[0]));
+    for (int i = 1; i < size; i++){
+      beziers.push_back(beziernp(mvcoords[0],mvcoords[1]));
+    }
   }
 };
 
