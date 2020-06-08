@@ -38,16 +38,20 @@ struct dualScurve{
 as many transformations as we want but only 2 garanteed target locations*/
 class beziernp{
 private:
-  double** coords; //for once, we arent using pointers
+  double** coords;
   int size; //coordinate size
 public:
-  //sinfo and einfo format: x, y, angle(rads)
+  //sinfo and einfo format: x, y, angle(rads), einfo 4th param is
   beziernp(double sinfo[3], double einfo[3], double offsetcoords[][2]){
     coords = (double**)new double[ //I have no idea how casting here is somehow legal
     2 + sizeof(offsetcoords)/sizeof(offsetcoords[0])][2]; //manual calculation of size
     size = sizeof(coords)/sizeof(coords[0]);
     coords[0][0] = sinfo[0];
     coords[0][1] = sinfo[1];
+    /*below: these values are here to prevent harsh turns due to existing momentum
+    by applying a transformation in the current direction of movement*/
+    coords[1][0] = sinfo[0]+cos(sinfo[2])*estspd*vscalefac;
+    coords[1][1] = sinfo[1]+sin(sinfo[2])*estspd*vscalefac;
     coords[size][0] = einfo[0];
     coords[size][1] = einfo[1];
     std::copy(offsetcoords[0],offsetcoords[size-3],coords[1]);//I'm honestly not too sure this works, pls test in eclipse or something
@@ -57,8 +61,11 @@ public:
     coords = (double**)new double[2][2];
     coords[0][0] = sinfo[0];
     coords[0][1] = sinfo[1];
-    coords[sizeof(coords)/sizeof(coords[0])][0] = einfo[0];
-    coords[sizeof(coords)/sizeof(coords[0])][1] = einfo[1];
+    //below: these values are here to prevent harsh turns due to existing momentum
+    coords[1][0] = sinfo[0]+cos(sinfo[2])*estspd*vscalefac;
+    coords[1][1] = sinfo[1]+sin(sinfo[2])*estspd*vscalefac;
+    coords[size][0] = einfo[0];
+    coords[size][1] = einfo[1];
   }
   //this getvals assumes we maintain the global pointer target coordinate approach
   //www.desmos.com/calculator/cahqdxeshd
@@ -66,6 +73,7 @@ public:
     double xtot = 0;
     double ytot = 0;
     //iteration loop for n-amount of offset points, pls confirm if working
+    //double it ranges from 0 to 1
     for (int i = 0; i < size-2; i++){
       xtot+=(1-it)*((1-it)*coords[i][0]+it*coords[i+1][0])+it*((1-it)*coords[i+1][0]+it*coords[i+2][0]);
       ytot+=(1-it)*((1-it)*coords[i][1]+it*coords[i+1][1])+it*((1-it)*coords[i+1][1]+it*coords[i+2][1]);

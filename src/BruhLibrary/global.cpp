@@ -20,7 +20,7 @@ double yR = 0;
 double estspd = 0;
 double heading = angleG;
 double xyaT[3] = {0,0,angleG};
-
+double vscalefac = 0;
 
 //********************************************************************************//
 //ADIEncoder arrays:
