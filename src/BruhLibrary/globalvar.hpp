@@ -59,3 +59,6 @@ extern double Scurvevals[][4];
 //auton selector values
 extern bool confirmedauton;
 extern int selectedauton;
+
+//speed bezier curve transformation weight factor
+extern double vscalefac;
