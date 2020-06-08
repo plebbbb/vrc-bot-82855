@@ -138,3 +138,8 @@ double rottodist(double rad, double radius){
 double degtorad(double deg){
   return fmod(deg*(M_PI/180),2*M_PI);
 };
+
+//recursive approach to computing factorials
+double factorial(double n){
+  return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
+}
