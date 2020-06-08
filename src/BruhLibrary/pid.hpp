@@ -45,9 +45,8 @@ private:
 public:
   //sinfo and einfo format: x, y, angle(rads), einfo 4th param is target end heading
   beziernp(double sinfo[3], double einfo[3], double offsetcoords[][2]){
-    coords = (double**)new double[ //I have no idea how casting here is somehow legal
-    4 + sizeof(offsetcoords)/sizeof(offsetcoords[0])][2]; //manual calculation of size
-    size = sizeof(coords)/sizeof(coords[0]);
+    size = sizeof(offsetcoords)/sizeof(double[2])+4;
+    coords = (double**)new double[size][2]; //how does casting to double** work here, i have no clue
     coords[0][0] = sinfo[0];
     coords[0][1] = sinfo[1];
     /*below: these values are here to prevent harsh turns due to existing momentum
@@ -139,13 +138,13 @@ struct compositebezier{
   int size;
   //arr config: include the bezier from your current positon too
   compositebezier(beziernp arr[]){
-    size = sizeof(arr)/sizeof(arr[0])+1;
+    size = sizeof(arr)/sizeof(beziernp);
     for (int i = 0; i < size; i++) beziers.push_back(arr[i]);
   }
   //mvcoords config - do not include the current position, only future positions
   //new bezier curve is generated using current point
   compositebezier(double mvcoords[][3]){
-    size = sizeof(mvcoords)/sizeof(mvcoords[0])+1;
+    size = sizeof(mvcoords)/sizeof(double[3])+1;
     beziers.push_back(beziernp(mvcoords[0],mvcoords[0]));
     for (int i = 1; i < size; i++){
       beziers.push_back(beziernp(mvcoords[0],mvcoords[1]));

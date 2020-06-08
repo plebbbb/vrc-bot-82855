@@ -156,3 +156,12 @@ struct motionpath{
     return false;
   }
 };
+
+/*motion:
+  This is here so we can make a single std::vector for both
+  vision sensor PID control, as well as bezier curve moves, and
+  whatever else we may come up with, all we gotta do is extend this to it,
+  and make it polymorphic */
+class motion{
+
+};
