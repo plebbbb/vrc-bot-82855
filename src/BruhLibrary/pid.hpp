@@ -1,5 +1,6 @@
 #include "main.h"
 #include "utilityfunctions.hpp"
+#include "globalvar.hpp"
 using namespace pros;
 #pragma once
 
@@ -31,6 +32,51 @@ struct dualScurve{
     //for the part past 50%, we flip the curveS, so that we only need one curve from 0-50 for each different profile
   };
 };
+
+//beziernp: a candidate approach for our path finding solution
+/*This is a full on proper n-point bezier curve, where we can add
+as many transformations as we want but only 2 garanteed target locations*/
+class beziernp{
+private:
+  double** coords; //for once, we arent using pointers
+  int size; //coordinate size
+public:
+  //sinfo and einfo format: x, y, angle(rads)
+  beziernp(double sinfo[3], double einfo[3], double offsetcoords[][2]){
+    coords = (double**)new double[ //I have no idea how casting here is somehow legal
+    2 + sizeof(offsetcoords)/sizeof(offsetcoords[0])][2]; //manual calculation of size
+    size = sizeof(coords)/sizeof(coords[0]);
+    coords[0][0] = sinfo[0];
+    coords[0][1] = sinfo[1];
+    coords[size][0] = einfo[0];
+    coords[size][1] = einfo[1];
+    std::copy(offsetcoords[0],offsetcoords[size-3],coords[1]);//I'm honestly not too sure this works, pls test in eclipse or something
+    //above: manual array size calc here cuz idk how to cast this one for .size()
+  }
+  beziernp(double sinfo[3], double einfo[3]){
+    coords = (double**)new double[2][2];
+    coords[0][0] = sinfo[0];
+    coords[0][1] = sinfo[1];
+    coords[sizeof(coords)/sizeof(coords[0])][0] = einfo[0];
+    coords[sizeof(coords)/sizeof(coords[0])][1] = einfo[1];
+  }
+  //this getvals assumes we maintain the global pointer target coordinate approach
+  //www.desmos.com/calculator/cahqdxeshd
+  void getval(double it){
+    double xtot = 0;
+    double ytot = 0;
+    //iteration loop for n-amount of offset points, pls confirm if working
+    for (int i = 0; i < size-2; i++){
+      xtot+=(1-it)*((1-it)*coords[i][0]+it*coords[i+1][0])+it*((1-it)*coords[i+1][0]+it*coords[i+2][0]);
+      ytot+=(1-it)*((1-it)*coords[i][1]+it*coords[i+1][1])+it*((1-it)*coords[i+1][1]+it*coords[i+2][1]);
+    }
+    xtot*=(1-it);
+    ytot*=(1-it);
+    xyaT[0] = xtot;
+    xyaT[1] = ytot;
+  }
+};
+
 
 /*PID: generic PID system*/
 //NOTE: HAS NOT BEEN TESTED PLS TEST
