@@ -9,7 +9,7 @@ it works in the actual code b/c we include it after global.hpp in main.cpp those
 //#include "global.hpp"
 //this is ripped straght from the old code. Ik it works but its still super sketchy
 //also we may want to work on the delays
-void autonselection() {
+/*void autonselection() {
   ctrl.clear();
   while (true) {
     delay(50);
@@ -53,5 +53,5 @@ void autonselection() {
     delay(50);
   }
   ctrl.clear();
-  ctrl.set_text(0, 0, "PROGRAM START"); //*/
-}
+  ctrl.set_text(0, 0, "PROGRAM START"); //
+}*/

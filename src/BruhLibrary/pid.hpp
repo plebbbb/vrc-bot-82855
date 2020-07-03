@@ -37,7 +37,7 @@ struct dualScurve{
   /*This is a full on proper n-point bezier curve, where we can add
   as many transformations as we want but only 2 garanteed target locations
   */
-class beziernp{
+/*class beziernp{
 private:
   double** coords;
   double* binomialfactors; //double may be too small ngl
@@ -50,7 +50,7 @@ public:
     coords[0][0] = sinfo[0];
     coords[0][1] = sinfo[1];
     /*below: these values are here to prevent harsh turns due to existing momentum
-    by applying a transformation in the current direction of movement*/
+    by applying a transformation in the current direction of movement*//*
     coords[1][0] = sinfo[0]+cos(sinfo[2])*estspd*vscalefac;
     coords[1][1] = sinfo[1]+sin(sinfo[2])*estspd*vscalefac;
     coords[size-1][0] = sinfo[0]+cos(sinfo[2])*127*vscalefac; //127 is a placeholder
@@ -66,7 +66,7 @@ public:
     coords[0][0] = sinfo[0];
     coords[0][1] = sinfo[1];
     /*below: these values are here to prevent harsh turns due to existing momentum
-    by applying a transformation in the current direction of movement*/
+    by applying a transformation in the current direction of movement*//*
     coords[1][0] = sinfo[0]+cos(sinfo[2])*estspd*vscalefac;
     coords[1][1] = sinfo[1]+sin(sinfo[2])*estspd*vscalefac;
     coords[size-1][0] = sinfo[0]+cos(sinfo[2])*127*vscalefac; //127 is a placeholder
@@ -94,6 +94,7 @@ public:
   //variation two, probably higher chance of working than the other option, but probably
   //a lot more taxing, we may actually hit performance issues from this once
   //https://www.desmos.com/calculator/xlpbe9bgll
+  /*
   void getvalF(double t){
     double x = 0; double y = 0;
     for (int i = 0; i < size; i++){
@@ -132,7 +133,7 @@ public:
 
 //compositebezier: another candidate approach for path finding
 /*This is a piecewise bezier curve approach using beziernp instances, of which
-will have 4 default offset points each, two for end points, two for heading targets*/
+will have 4 default offset points each, two for end points, two for heading targets*//*
 struct compositebezier{
   std::vector<beziernp> beziers; //ngl shoulda started running vectors a lot sooner
   int size;
@@ -151,7 +152,7 @@ struct compositebezier{
     }
   }
 };
-
+*/
 
 /*PID: generic PID system*/
 //NOTE: HAS NOT BEEN TESTED PLS TEST

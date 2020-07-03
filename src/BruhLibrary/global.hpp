@@ -37,4 +37,4 @@ extern coordcontroller mover;
 //TBD: add all the other controllers
 
 //std::vector of processed position commands
-extern std::vector<motion> processedpaths
+extern std::vector<motion> processedpaths;

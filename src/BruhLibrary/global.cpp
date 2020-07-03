@@ -42,6 +42,12 @@ motorw kiwimotors[] = {
   motorw(3,true,0) //Pure translational Motor
 };
 
+motorw xdrivemotors[] = {
+  motorw(15,true,(3*M_PI)/4), //top right corner
+  motorw(16,true,(M_PI)/4), //bottom right corner
+  motorw(17,true,(7*M_PI)/4), //bottom left corner
+  motorw(19,true,(5*M_PI)/4), //top left corner
+};
 
 //********************************************************************************//
 //PID Variables
@@ -106,14 +112,14 @@ PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup f
 //actual controllers
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
-basecontroller base(kiwimotors);
+basecontroller base(xdrivemotors);
 coordcontroller mover(base,bPID,xyaT);
 
 //********************************************************************************//
 //functions:
 double determinebiggest(double a, double b){
   if (a>b) return a;
-  else return b;
+  return b;
 }
 
 double isposorneg(double input){
