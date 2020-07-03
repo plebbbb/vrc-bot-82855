@@ -43,10 +43,10 @@ motorw kiwimotors[] = {
 };
 
 motorw xdrivemotors[] = {
-  motorw(15,false,(3*M_PI/4)), //top right corner
-  motorw(16,true,((M_PI)/4)), //bottom right corner
-  motorw(17,true,((7*M_PI)/4)), //bottom left corner
-  motorw(19,false,(5*M_PI)/3), //top left corner
+  motorw(15,true,(3*M_PI)/4), //top right corner
+  motorw(16,true,(M_PI)/4), //bottom right corner
+  motorw(17,true,(7*M_PI)/4), //bottom left corner
+  motorw(19,true,(5*M_PI)/4), //top left corner
 };
 
 //********************************************************************************//
@@ -119,7 +119,7 @@ coordcontroller mover(base,bPID,xyaT);
 //functions:
 double determinebiggest(double a, double b){
   if (a>b) return a;
-  else return b;
+  return b;
 }
 
 double isposorneg(double input){

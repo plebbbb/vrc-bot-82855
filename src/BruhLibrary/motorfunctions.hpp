@@ -107,17 +107,24 @@ struct motorw{
 */
 struct basecontroller{
   motorw* MAP; //sketchy pointer that points to the motorw array so we can use it later
+  double vals[4];
+  double rotationalratio;
   basecontroller(motorw m[]){MAP = m;}
   /*vectormove: a universal movement function which takes x and y inputs,
   magnitude is irrelevant in this case, use spd to determine speed*/
   void vectormove(double x, double y, double r, double spd){
-    x = x/determinebiggest(fabs(x),fabs(y)); y=y/determinebiggest(fabs(x),fabs(y));
-    double rotationalratio = fabs(r)/(determinebiggest(fabs(x),fabs(y))+fabs(r));
+    double biggest = determinebiggest(fabs(x),fabs(y));
+    rotationalratio = fabs(r)/(determinebiggest(fabs(x),fabs(y))+fabs(r)); //this should be above x and y scale conversion
+    if (x != 0) x = x/biggest; //x scale conversion
+    if (y != 0) y = y/biggest; //y scale conversion
+    //rotationalratio = 1;
     //above: very sketchy power distrubtion formula between rotation and translation
     for (int i = 0; i < sizeof(MAP); i++){
+      vals[i] = (spd*(((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio)) + rotationalratio));
       //calculation for the power of each motor, see discord #design-ideas for formula
-      MAP[i].mot.move_velocity(spd*BASE_MOTOR_RPM*((-x*MAP[i].sinV + y*MAP[i].cosV)*(1-rotationalratio) + rotationalratio*r));
+      MAP[i].mot.move_velocity(spd*((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio) + rotationalratio));
       //above: rotationalratio code made even more sketchier, it doesnt even scale correctly I think
+    //MAP[i].mot = (spd*BASE_MOTOR_RPM*((-x*MAP[i].sinV + y*MAP[i].cosV)*(1-rotationalratio) + rotationalratio*r));
       //also above: haha imagine using DIY position pid when you can use already tuned velocity PID
     };
   }
