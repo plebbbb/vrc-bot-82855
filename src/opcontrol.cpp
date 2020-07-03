@@ -9,7 +9,7 @@ void opcontrol(){
       ctrl.get_analog(ANALOG_LEFT_Y), //forwards/back translation
       ctrl.get_analog(ANALOG_RIGHT_X), //rotation
       //10
-     speedmultiplier*determinebiggest(
+     (speedmultiplier/127)*determinebiggest( //div by speedmultiplier/127 to scale joystick values to percentage values
       // this entire thing below is absolutely disgusting but it works
       //and also we are gonna keep with fabs cuz vectormove takes doubles
       fabs((double)ctrl.get_analog(ANALOG_RIGHT_X)),

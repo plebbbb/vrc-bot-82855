@@ -11,7 +11,7 @@
 
 //********************************************************************************//
 //Variables:
-double speedmultiplier = 1;
+double speedmultiplier = 100; //IN PERCENT, 100 being 100%
 double angleG = 0;
 double xG = 0;
 double yG = 0;
