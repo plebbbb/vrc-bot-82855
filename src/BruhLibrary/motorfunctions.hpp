@@ -113,6 +113,7 @@ struct basecontroller{
   /*vectormove: a universal movement function which takes x and y inputs,
   magnitude is irrelevant in this case, use spd to determine speed*/
   void vectormove(double x, double y, double r, double spd){
+    spd = spd*(BASE_MOTOR_RPM/100); //adjustments to max out performance
     double biggest = determinebiggest(fabs(x),fabs(y));
     rotationalratio = r/(determinebiggest(fabs(x),fabs(y))+fabs(r)); //this should be above x and y scale conversion
     if (x != 0) x = x/biggest; //x scale conversion
