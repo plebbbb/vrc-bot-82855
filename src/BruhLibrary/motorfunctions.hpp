@@ -114,7 +114,7 @@ struct basecontroller{
   magnitude is irrelevant in this case, use spd to determine speed*/
   void vectormove(double x, double y, double r, double spd){
     double biggest = determinebiggest(fabs(x),fabs(y));
-    rotationalratio = fabs(r)/(determinebiggest(fabs(x),fabs(y))+fabs(r)); //this should be above x and y scale conversion
+    rotationalratio = r/(determinebiggest(fabs(x),fabs(y))+fabs(r)); //this should be above x and y scale conversion
     if (x != 0) x = x/biggest; //x scale conversion
     if (y != 0) y = y/biggest; //y scale conversion
     //rotationalratio = 1;
