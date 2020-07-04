@@ -105,6 +105,10 @@ struct motorw{
   - Directional control with speed controls
   - Rotational control with PID stabilization
 */
+//also its actually stupid efficient, at least the vector calculation parts. The if statements, idk.
+//we dont even call a single cos or sin function, and only do multiplication and adding, so its super fast
+//we make an assumption that there is always a motor which perfectly counters any unwanted forces tho, which works but also
+//means that we will end up relying a lot on heading PIDs for auton, alongside manual control not mapping perfectly to the joystick
 struct basecontroller{
   motorw* MAP; //sketchy pointer that points to the motorw array so we can use it later
   double vals[4];

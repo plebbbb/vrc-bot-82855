@@ -7,7 +7,7 @@ void opcontrol(){
     base.vectormove(
       ctrl.get_analog(ANALOG_LEFT_X), //left-right translation
       ctrl.get_analog(ANALOG_LEFT_Y), //forwards/back translation
-      ctrl.get_analog(ANALOG_RIGHT_X), //rotation
+      -ctrl.get_analog(ANALOG_RIGHT_X), //rotation
       //10
      (speedmultiplier/127)*determinebiggest( //div by speedmultiplier/127 to scale joystick values to percentage values
       // this entire thing below is absolutely disgusting but it works
@@ -23,11 +23,13 @@ void opcontrol(){
     //base.vectormove(100,100,100,20);
     //ang+=0.01;
     //base.vectormove(cos(ang),sin(ang),0,20);
-    lcd::print(0, "TR motor: %f",base.vals[0]);
-    lcd::print(1, "BR motor: %f",base.vals[1]);
-    lcd::print(2, "BL motor: %f",base.vals[2]);
-    lcd::print(3, "TL motor: %f",base.vals[3]);
+    lcd::print(0, "TR motor: %d",(int)base.vals[0]);
+    lcd::print(1, "BR motor: %d",(int)base.vals[1]);
+    lcd::print(2, "BL motor: %d",(int)base.vals[2]);
+    lcd::print(3, "TL motor: %d",(int)base.vals[3]);
     lcd::print(5, "Rot Ratio: %f",base.rotationalratio);
+    lcd::print(6, "Left Joystick X: %d",(int)ctrl.get_analog(ANALOG_LEFT_X));
+
     delay(10);
   };
 }
