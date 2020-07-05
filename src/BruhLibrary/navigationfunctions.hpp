@@ -33,8 +33,10 @@ struct odometrycontroller{
     double yC = yLN*sin(avang)+xLN*sin(avang-(M_PI/2));
     xG+=xC;
     yG+=yC;
-    angleG = fmod((angleG+rang),M_PI*2);
-    estspd = sqrt(xLN*xLN + yLN*yLN)*100; //x100 to convert to in/s
+    angleG+=rang;
+    if (angleG > (M_PI*2)) angleG = angleG - (M_PI*2);
+    if (angleG < 0) angleG = angleG + (M_PI*2);
+    estspd = sqrt(xLN*xLN + yLN*yLN)*100; //x100 to convert to in/s from in/10ms
     if (xC != 0) heading = fmod(atan2(yC,xC),(2*M_PI));
     else heading = 0;
     left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value

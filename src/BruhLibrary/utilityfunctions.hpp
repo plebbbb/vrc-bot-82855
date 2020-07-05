@@ -25,3 +25,6 @@ extern double degtorad(double deg);
 
 //factorial
 extern double factorial(double n);
+
+//determinesmallest: determines smallest val, not absolute
+extern double determinesmallest(double a, double b);
