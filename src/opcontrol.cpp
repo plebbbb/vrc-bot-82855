@@ -4,6 +4,7 @@ using namespace pros;
 double ang = 0;
 void opcontrol(){
   while(true){
+    odo.posupdv2();
     base.vectormove(
       ctrl.get_analog(ANALOG_LEFT_X), //left-right translation
       ctrl.get_analog(ANALOG_LEFT_Y), //forwards/back translation
@@ -19,17 +20,22 @@ void opcontrol(){
       )
       )
     );
+    /*lcd::print(0,"Left Encoder: %f", (rottodist(degtorad((double)odo.left->get_value()),(double)STD_TWHEEL_RADIUS)));
+    lcd::print(1,"Right Encoder: %f", (rottodist(degtorad((double)odo.right->get_value()),(double)STD_TWHEEL_RADIUS)));
+    lcd::print(2,"Back Encoder: %f", (rottodist(degtorad((double)odo.back->get_value()),(double)STD_BTWHEEL_RADIUS)));
+  /*/  lcd::print(0,"X: %f",xG);
+    lcd::print(1,"Y: %f", yG);
+    lcd::print(2,"Angle: %f", angleG);
+  /*  lcd::print(3,"LD: %f",odo.LD);
+    lcd::print(4,"RD: %f",odo.RD);
+    lcd::print(5,"HD: %f", odo.HD);
+    lcd::print(6,"RA: %f", odo.relangle);
+    lcd::print(7,"DS: %f", (odo.RD-odo.LD));*/
+
     //base.vectormove(0,0,100,20);
     //base.vectormove(100,100,100,20);
     //ang+=0.01;
     //base.vectormove(cos(ang),sin(ang),0,20);
-    lcd::print(0, "TR motor: %d",(int)base.vals[0]);
-    lcd::print(1, "BR motor: %d",(int)base.vals[1]);
-    lcd::print(2, "BL motor: %d",(int)base.vals[2]);
-    lcd::print(3, "TL motor: %d",(int)base.vals[3]);
-    lcd::print(5, "Rot Ratio: %f",base.rotationalratio);
-    lcd::print(6, "Left Joystick X: %d",(int)ctrl.get_analog(ANALOG_LEFT_X));
-
     delay(10);
   };
 }

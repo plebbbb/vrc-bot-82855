@@ -23,5 +23,5 @@ extern double rottodist(double rad, double radius);
 //degtorad: for user convience - converts degrees into radians
 extern double degtorad(double deg);
 
-//factorial 
+//factorial
 extern double factorial(double n);

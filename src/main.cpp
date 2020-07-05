@@ -3,6 +3,7 @@
 using namespace pros;
 void initialize() {
   lcd::initialize();
+  delay(100);
   //autonselection(); //calls auton selection method
 }
 void disabled() {}

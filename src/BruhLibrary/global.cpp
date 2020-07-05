@@ -12,7 +12,7 @@
 //********************************************************************************//
 //Variables:
 double speedmultiplier = 100; //IN PERCENT, 100 being 100%
-double angleG = 0;
+double angleG = M_PI/2;
 double xG = 0;
 double yG = 0;
 double xR = 0;
@@ -27,9 +27,9 @@ double vscalefac = 0;
 //ADIEncoder format: pin 1, pin2, inversed or not
 //Array format: Left, Right, Back
 ADIEncoder odencoders[3] = {
-  ADIEncoder(0,1,true),
-  ADIEncoder(2,3,false),
-  ADIEncoder(4,5,false)
+  ADIEncoder('C','D',true),
+  ADIEncoder('B','A',false),
+  ADIEncoder('F','E',true)
 };
 
 
@@ -149,3 +149,18 @@ double degtorad(double deg){
 double factorial(double n){
   return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
 }
+
+//commented out b/c header issues prevent stuff from working
+/*void basecontrollerdebug(basecontroller a){
+  lcd::print(0, "TR motor: %f",a.vals[0]);
+  lcd::print(1, "BR motor: %f",a.vals[1]);
+  lcd::print(2, "BL motor: %f",a.vals[2]);
+  lcd::print(3, "TL motor: %f",a.vals[3]);
+  lcd::print(5, "Rot Ratio: %f",a.rotationalratio);
+}
+*/
+void trackingwheeldebug(odometrycontroller a) {
+lcd::print(0,"Left Encoder: %d", (a.left->get_value()));
+lcd::print(1,"Right Encoder: %d", (a.right->get_value()));
+lcd::print(2,"Back Encoder: %d", (a.back->get_value()));
+}//*/

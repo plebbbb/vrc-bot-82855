@@ -15,20 +15,45 @@ struct odometrycontroller{
   odometrycontroller(ADIEncoder en[],double s, double b):ds(s),db(b){left = &en[0]; right = &en[1]; back = &en[2];}
   //updates position, should be triggered once every 10ms or so
   void updateposition(){
-    double LD = rottodist(left->get_value(),STD_TWHEEL_RADIUS);
-    double RD = rottodist(right->get_value(),STD_TWHEEL_RADIUS);
-    double HD = rottodist(back->get_value(),STD_TWHEEL_RADIUS);//for calculating lateral shift we make a perpendicular line on our arc
+    double LD = rottodist(degtorad(left->get_value()),STD_TWHEEL_RADIUS);
+    double RD = rottodist(degtorad(right->get_value()),STD_TWHEEL_RADIUS);
+    double HD = rottodist(degtorad(back->get_value()),STD_BTWHEEL_RADIUS);//for calculating lateral shift we make a perpendicular line on our arc
     double relangle = (RD-LD)/(2*ds); //100% this part works
-    double chordlength = 2*(RD/relangle)*sin(relangle/2); //85% this part works
-    double xN = chordlength*cos(angleG)+HD*sin(angleG+(relangle/2)); //15% this and below work
-    double yN = chordlength*sin(angleG)+HD*cos(angleG+(relangle/2));
+    double chordlength = 2*((LD/relangle)+ds)*sin(relangle/2); //85% this part works
+    double Schordlength = 2*((HD/relangle)-db)*sin(relangle/2);
+    double xN = chordlength*cos(angleG+(relangle/2))+Schordlength*cos(angleG+(relangle/2)+M_PI/2); //15% this and below work
+    double yN = chordlength*sin(angleG+(relangle/2))+Schordlength*sin(angleG+(relangle/2)+M_PI/2);
     xR = xN;
     yR = yN;
-    //50 - we run a 20ms clock, converts to in/seconds
-    estspd = sqrt(xR*xR + yR*yR)*50;
+    //100 - we run a 10ms clock, converts to in/seconds
+    estspd = sqrt(xR*xR + yR*yR)*100;
     xG+=xN; yG+=yN;
     heading = fmod(atan(yN/xN),(2*M_PI)); //this may need to be mellowed out a bit, a new heading every time can be very noisy
     angleG = fmod((angleG+relangle),(2*M_PI)); //technically sketchy but not really still pls test
+    delay(10);
+    left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
+    right->reset();
+    back->reset();
+  }
+  //below: lazier, revised edition. Seperates into local and global coordinate conversions instead of all in one
+  void posupdv2(){
+    double xLN, yLN;
+    double LD = rottodist(degtorad(left->get_value()),STD_TWHEEL_RADIUS);
+    double RD = rottodist(degtorad(right->get_value()),STD_TWHEEL_RADIUS);
+    double HD = rottodist(degtorad(back->get_value()),STD_BTWHEEL_RADIUS);
+    double rang = ((RD-LD)/(ds*2));
+    if (rang == 0){
+      xLN = HD;
+      yLN = RD;
+    }
+    else {
+      yLN = 2*sin(rang/2)*(LD/rang + ds);
+      xLN = 2*sin(rang/2)*(HD/rang - db);
+    }
+    double avang = angleG+(rang/2);
+    xG+=yLN*cos(avang)+xLN*cos(avang-(M_PI/2));
+    yG+=yLN*sin(avang)+xLN*sin(avang-(M_PI/2));
+    angleG = fmod((angleG+rang),M_PI*2);
     left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
     right->reset();
     back->reset();
