@@ -31,7 +31,7 @@ double positionsetTEST[][3] = {
 void autonomous(){
   int cycle = 0;
   while(true){
-    odo.updateposition();
+    odo.posupdv2();
     //the idea for this if statement is that it calls all updates
     //and only passes once everything is done, before updating the variables
     if (mover.update()/* && (motorf object).PID_UPDATE_CYCLE ....*/){

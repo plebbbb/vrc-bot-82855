@@ -3,8 +3,12 @@
 using namespace pros;
 double ang = 0;
 void opcontrol(){
+  xyaT[0] = 20;
+  xyaT[1] = 10;
+  xyaT[2] = 3.14;
   while(true){
     odo.posupdv2();
+  //  mover.update();
     base.vectormove(
       ctrl.get_analog(ANALOG_LEFT_X), //left-right translation
       ctrl.get_analog(ANALOG_LEFT_Y), //forwards/back translation
@@ -19,13 +23,15 @@ void opcontrol(){
         fabs((double)ctrl.get_analog(ANALOG_LEFT_Y))
       )
       )
-    );
+    );/*/
     /*lcd::print(0,"Left Encoder: %f", (rottodist(degtorad((double)odo.left->get_value()),(double)STD_TWHEEL_RADIUS)));
     lcd::print(1,"Right Encoder: %f", (rottodist(degtorad((double)odo.right->get_value()),(double)STD_TWHEEL_RADIUS)));
     lcd::print(2,"Back Encoder: %f", (rottodist(degtorad((double)odo.back->get_value()),(double)STD_BTWHEEL_RADIUS)));
   /*/  lcd::print(0,"X: %f",xG);
     lcd::print(1,"Y: %f", yG);
     lcd::print(2,"Angle: %f", angleG);
+    lcd::print(3,"Est Spd: %d in/s", (int)estspd);
+    lcd::print(4, "Est Heading: %f", heading);
   /*  lcd::print(3,"LD: %f",odo.LD);
     lcd::print(4,"RD: %f",odo.RD);
     lcd::print(5,"HD: %f", odo.HD);
