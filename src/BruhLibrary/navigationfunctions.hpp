@@ -48,7 +48,7 @@ struct odometrycontroller{
     }
     else {
       yLN = 2*sin(rang/2)*(LD/rang + ds);
-      xLN = 2*sin(rang/2)*(HD/rang - db);
+      xLN = 2*sin(rang/2)*(HD/rang + db);
     }
     double avang = angleG+(rang/2);
     xG+=yLN*cos(avang)+xLN*cos(avang-(M_PI/2));
