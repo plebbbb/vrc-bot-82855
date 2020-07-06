@@ -21,27 +21,34 @@ procedure documentation:
 
 //postionsetTEST: Benchmark test to ensure the functionality of the motors
 double positionsetTEST[][3] = {
-  {100,100,1},
-  {200,100,2},
-  {50,50,2*M_PI},
-  {-25,200,(5*M_PI)/3}
+  {10,10,1},
+  {20,10,2},
+  {20,20,2*M_PI},
+  {-10,20,(5*M_PI)/3}
 };
 
 //********************************************************************************//
 void autonomous(){
   int cycle = 0;
+  xyaT[0] = positionsetTEST[0][0];
+  xyaT[1] = positionsetTEST[0][1];
+  xyaT[2] = M_PI/2;
+  coordcontroller mover(base,bPID);
+//  odometrycontrollerdebug();
   while(true){
     odo.posupdv2();
     //the idea for this if statement is that it calls all updates
     //and only passes once everything is done, before updating the variables
+    odometrycontrollerdebug();
     if (mover.update()/* && (motorf object).PID_UPDATE_CYCLE ....*/){
       /*TBD: Make the movement array into a 3d array,
         have the third dimension be for each different auton
         and the */
       cycle++;
+      lcd::print(7,"Cycle: %f", cycle);
       //is the for loop cheese? theres the something:something way but
       //idk how that works, nor if its even in C++
-      for (int i = 0; i > 3; i++){
+      for (int i = 0; i > 2; i++){
         xyaT[i] = positionsetTEST[cycle][i];
       }
       /*while the goal was to not use functions, chances are we are gonna
@@ -50,7 +57,7 @@ void autonomous(){
       /*
       (motorf object).PID_MOVE_TARGET(positionsetTEST[cycle][specific index]);
       */
-      delay(10);
     }
+    delay(10);
   }
 }

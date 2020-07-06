@@ -28,3 +28,6 @@ extern double factorial(double n);
 
 //determinesmallest: determines smallest val, not absolute
 extern double determinesmallest(double a, double b);
+
+//debug feature for odometry
+extern void odometrycontrollerdebug();

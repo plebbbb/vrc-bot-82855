@@ -55,7 +55,7 @@ motorw xdrivemotors[] = {
 //********************************************************************************//
 //PIDKvals format: Pk, Ik, Dk
 double PIDKvals[][3] = {
-  {1,0.25,1},
+  {1,0.05,1},
   {5,1.5,3}
 };
 
@@ -193,11 +193,11 @@ void trackingwheeldebug(odometrycontroller a) {
 lcd::print(0,"Left Encoder: %d", (a.left->get_value()));
 lcd::print(1,"Right Encoder: %d", (a.right->get_value()));
 lcd::print(2,"Back Encoder: %d", (a.back->get_value()));
-}/*
+}*/
 void odometrycontrollerdebug(){
 lcd::print(0,"X: %f",xG);
 lcd::print(1,"Y: %f", yG);
 lcd::print(2,"Angle: %f", angleG);
-lcd::print(3,"Est Spd: %d in/s", (int)estspd);
-lcd::print(4, "Est Heading: %f", heading);
-}*/
+//lcd::print(3,"Est Spd: %d in/s", (int)estspd);
+//lcd::print(4, "Est Heading: %f", heading);
+}

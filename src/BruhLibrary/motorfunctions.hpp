@@ -144,7 +144,7 @@ struct basecontroller{
     double tang;
     PID* rot;
     opcontrolcontroller(basecontroller b, controller_analog_e_t* css, PID ro, bool* config){
-      ssc = &b; controls = css; ; rot = &ro; configuration = config; tang = M_PI*2;}
+      ssc = &b; controls = css; ; rot = &ro; configuration = config; tang = angleG;}
     //tbd - deal with interia issues from rotation at high speeds, PID insta targets what happens when analog stick is 0
     void move(){
       double rs = -ctrl.get_analog(controls[2]);
@@ -173,12 +173,16 @@ struct basecontroller{
         determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
       );
     }
+    //a reminder, this is hard offset pi/2 counterclockwise to account for angleG = pi/2 for the forwards direction
+    //also I have no idea how to do this without an offset now
     void absolutemove(double rotation){
       ssc->vectormove(
-        (double)(ctrl.get_analog(controls[0])*sin(angleG)+ctrl.get_analog(controls[1])*cos(angleG)),
-        (double)(ctrl.get_analog(controls[1])*sin(angleG)+ctrl.get_analog(controls[0])*cos(angleG)),
+        (double)(ctrl.get_analog(controls[0])*cos(getrelrad(angleG-M_PI/2,0))+ctrl.get_analog(controls[1])*cos(getrelrad(angleG,M_PI))),
+        (double)(ctrl.get_analog(controls[1])*sin(getrelrad(angleG,M_PI))+ctrl.get_analog(controls[0])*sin(getrelrad(angleG-M_PI/2,0))),
         rotation,
         determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
       );
+      lcd::print(6,"local x axis: %f", (ctrl.get_analog(controls[0])*cos(getrelrad(angleG-M_PI/2,0))+ctrl.get_analog(controls[1])*cos(getrelrad(angleG,M_PI))));
+      lcd::print(7,"local y axis: %f", (ctrl.get_analog(controls[1])*sin(getrelrad(angleG,M_PI))+ctrl.get_analog(controls[0])*sin(getrelrad(angleG-M_PI/2,0))));
     }
   };

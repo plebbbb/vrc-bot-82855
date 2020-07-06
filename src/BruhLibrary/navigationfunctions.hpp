@@ -62,8 +62,8 @@ struct odometrycontroller{
 struct coordcontroller{
   basecontroller* mBase;
   PID* axiscontrollers; //the initial plan called for 3 PID controllers to allow for smooth motion curves, but for now we have a direct line approach
-  double* tcoords; //we are gonna try a potentially stupid approach, where we dont call coordcontroller but instead change the tgt coords directly
-  coordcontroller(basecontroller a, PID b[2], double t[3]){mBase = &a; axiscontrollers = b; tcoords = t;}
+  //double* xyaT; //we are gonna try a potentially stupid approach, where we dont call coordcontroller but instead change the tgt coords directly
+  coordcontroller(basecontroller a, PID b[3]){mBase = &a; axiscontrollers = b;}
   /*returns true when target is reached
     potential camera implementation: overload update with version that replaces r and perp with camera controls
     this overload would input the desired color profile that the camera is looking for.
@@ -72,23 +72,22 @@ struct coordcontroller{
     double yO = 0;
     //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
     //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
-    double xD = (xG-tcoords[0])*sin(angleG)+(yG-tcoords[1])*cos(angleG); //relative distances to target
-    double yD = (yG-tcoords[1])*sin(angleG)+(xG-tcoords[0])*cos(angleG); //relative distances to target
-    //unsure about recent correction from sin(angleG-pi/2) to cos(angleG), the thing is inversed but my initial math is probably wrong
-    double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
-    if ((sqrt(pow(xD,2)+pow(yD,2))) > 20) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-tcoords[0],yG-tcoords[1])));
+    double xD = (xyaT[0]-xG)*cos(angleG)+(xyaT[1]-yG)*sin(angleG+M_PI/2); //relative distances to target
+    double yD = (xyaT[1]-yG)*cos(angleG+M_PI/2)+(xyaT[0]-xG)*sin(angleG); //relative distances to target
+    double rD = (getrelrad(angleG,xyaT[2]))*5; //VERY janky pls confirm if getrelrad works
+  //  if ((sqrt(pow(xD,2)+pow(yD,2))) > 20) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
     //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
     //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
-    xD+=yO*sin(atan2(xD,yD));
-    yD+=yO*cos(atan2(xD,yD));
-    mBase->vectormove(xD,yD,rD,
-      //above: unsure about subtracting yO or adding it
-      //we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
-      fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+
-      fabs(axiscontrollers[1].update(rD))
-    );
-    if (fabs(axiscontrollers[0].update(sqrt(pow(xD,2)+pow(yD,2))))+fabs(axiscontrollers[1].update(rD)) < 15) return true;
-    return false;
+    //xD+=yO*sin(atan2(xD,yD));
+    //yD+=yO*cos(atan2(xD,yD));
+    double speed = fabs(axiscontrollers[0].update(sqrt(xD*xD+yD*yD)))+fabs(axiscontrollers[1].update(rD));
+    lcd::print(3,"Speed: %f",speed);
+    lcd::print(4,"xD: %f", xD);
+    lcd::print(5,"yD: %f",yD);
+    lcd::print(5,"rD: %f",rD);
+    mBase->vectormove(xD,yD,rD,speed);
+    if (round(sqrt(xD*xD+yD*yD)) == 0) return true;
+    else return false;
   }
 
   //this variation is for usage with motionpaths, where axiscontrollers merely maintains the speed target given by TSP
@@ -96,11 +95,11 @@ struct coordcontroller{
     double yO = 0;
     //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
     //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
-    double xD = (xG-tcoords[0])*sin(angleG)+(yG-tcoords[1])*cos(angleG); //relative distances to target
-    double yD = (yG-tcoords[1])*sin(angleG)+(xG-tcoords[0])*cos(angleG); //relative distances to target
+    double xD = (xG-xyaT[0])*sin(angleG)+(yG-xyaT[1])*cos(angleG); //relative distances to target
+    double yD = (yG-xyaT[1])*sin(angleG)+(xG-xyaT[0])*cos(angleG); //relative distances to target
     //unsure about recent correction from sin(angleG-pi/2) to cos(angleG), the thing is inversed but my initial math is probably wrong
-    double rD = getrelrad(angleG,tcoords[2]); //VERY janky pls confirm if getrelrad works
-    if ((sqrt(pow(xD,2)+pow(yD,2))) > 5) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-tcoords[0],yG-tcoords[1])));
+    double rD = getrelrad(angleG,xyaT[2]); //VERY janky pls confirm if getrelrad works
+    if ((sqrt(pow(xD,2)+pow(yD,2))) > 5) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
     //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
     //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
     xD+=yO*sin(atan2(xD,yD));
@@ -129,9 +128,9 @@ struct coordcontroller{
         the bot not stop after each curve by making the PID percentage be over
         the entire trajectory
           This will be done by either:
-            - Making Tcoords into a bait coordinate, and getting axiscontrollers to
+            - Making xyaT into a bait coordinate, and getting axiscontrollers to
             automatically convert to percentage inside coordcontroller by extending
-            tcoords percent units ahead in the ideal(line) direction (only good for 1.)
+            xyaT percent units ahead in the ideal(line) direction (only good for 1.)
             - Make low key motion profiling and then turn the axis controller from being
             the primary source of movement into something used to maintain the profiling
             speed targets
