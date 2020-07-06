@@ -74,7 +74,7 @@ struct coordcontroller{
     //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
     double xD = (xyaT[0]-xG)*cos(getrelrad(angleG-M_PI/2,0))+(xyaT[1]-yG)*cos(getrelrad(angleG,M_PI)); //relative distances to target
     double yD = (xyaT[1]-yG)*sin(getrelrad(angleG,M_PI))+(xyaT[0]-xG)*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
-    double rD = (getrelrad(angleG,xyaT[2]))*5; //VERY janky pls confirm if getrelrad works
+    double rD = (getrelrad(angleG,xyaT[2]))*5; //VERY janky figure out better solution than a hard multiplier
   //  if ((sqrt(pow(xD,2)+pow(yD,2))) > 20) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
     //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
     //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
@@ -86,7 +86,7 @@ struct coordcontroller{
     lcd::print(5,"yD: %f",yD);
     lcd::print(5,"rD: %f",rD);
     mBase->vectormove(xD,yD,rD,speed);
-    if (round(sqrt(xD*xD+yD*yD)) == 0) return true;
+    if (round(sqrt(xD*xD+yD*yD) + (rD/M_PI)*100) == 0) return true;
     else return false;
   }
 
