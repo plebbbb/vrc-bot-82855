@@ -111,7 +111,7 @@ struct motorw{
 //means that we will end up relying a lot on heading PIDs for auton, alongside manual control not mapping perfectly to the joystick
 struct basecontroller{
   motorw* MAP; //sketchy pointer that points to the motorw array so we can use it later
-  double vals[4];
+  //double vals[4];
   double rotationalratio;
   basecontroller(motorw m[]){MAP = m;}
   /*vectormove: a universal movement function which takes x and y inputs,
@@ -125,7 +125,7 @@ struct basecontroller{
     //rotationalratio = 1;
     //above: very sketchy power distrubtion formula between rotation and translation
     for (int i = 0; i < sizeof(MAP); i++){
-      vals[i] = (spd*(((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio)) + rotationalratio));
+      //vals[i] = (spd*(((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio)) + rotationalratio));
       //calculation for the power of each motor, see discord #design-ideas for formula
       MAP[i].mot.move_velocity(spd*((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio) + rotationalratio));
       //above: rotationalratio code made even more sketchier, it doesnt even scale correctly I think
@@ -135,6 +135,50 @@ struct basecontroller{
   }
 };
 
-/*odometrycontroller: interface for ADI_Encoder to determine the position of the bot:
-  - Rotational and translational data updating
-*/
+//opcontrolcontroller: wrapper for basecontroller to be used during manual drive.
+//we may implement motorF features into it as the situation dictates
+  struct opcontrolcontroller{
+    basecontroller* ssc; //pointer to basecontroller
+    controller_analog_e_t* controls; //joystick inputs
+    bool* configuration; //config for code
+    double tang;
+    PID* rot;
+    opcontrolcontroller(basecontroller b, controller_analog_e_t* css, PID ro, bool* config){
+      ssc = &b; controls = css; ; rot = &ro; configuration = config; tang = M_PI*2;}
+    //tbd - deal with interia issues from rotation at high speeds, PID insta targets what happens when analog stick is 0
+    void move(){
+      double rs = -ctrl.get_analog(controls[2]);
+      if (configuration[1]) rs = rotationcompute();
+      if (configuration[0]) relativemove(rs);
+      else absolutemove(rs);
+    }
+    double determinespeed(double p1, double p2, double p3){
+      return (speedmultiplier/127)*determinebiggest( //div by speedmultiplier/127 to scale joystick values to percentage values
+       fabs(p1),
+       determinebiggest(
+         fabs(p2),
+         fabs(p3)
+       )
+     );
+    }
+    double rotationcompute(){
+      if (ctrl.get_analog(controls[2])){tang = angleG; return -ctrl.get_analog(controls[2]);}
+      return rot->update(getrelrad(tang, angleG));
+    }
+    void relativemove(double rotation){
+      ssc->vectormove(
+        (double)ctrl.get_analog(controls[0]),
+        (double)ctrl.get_analog(controls[1]),
+        rotation,
+        determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
+      );
+    }
+    void absolutemove(double rotation){
+      ssc->vectormove(
+        (double)(ctrl.get_analog(controls[0])*sin(angleG)+ctrl.get_analog(controls[1])*cos(angleG)),
+        (double)(ctrl.get_analog(controls[1])*sin(angleG)+ctrl.get_analog(controls[0])*cos(angleG)),
+        rotation,
+        determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
+      );
+    }
+  };

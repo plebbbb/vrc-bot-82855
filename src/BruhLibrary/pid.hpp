@@ -215,7 +215,6 @@ public:
     PIDa[2] = err-lasterror;
     lasterror = err;
     double final = PIDa[0]*ratios[0] + PIDa[1]*ratios[1] + PIDa[2]*ratios[2];
-    lcd::print(6,"Final: %f", final);
     return isposorneg(final)*determinesmallest(fabs(final),maxlimit);
   };
 };

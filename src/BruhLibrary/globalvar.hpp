@@ -63,3 +63,7 @@ extern int selectedauton;
 
 //speed bezier curve transformation weight factor
 extern double vscalefac;
+
+//opcontrol configuration
+extern controller_analog_e_t controlscheme[];
+extern bool configoptions[];

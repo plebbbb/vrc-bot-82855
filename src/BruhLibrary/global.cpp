@@ -108,14 +108,31 @@ PID bPID[] = {
 
 PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup for a motorF
 
+//********************************************************************************//
+/*
+//Control scheme configuration
+//array format: left-right, forwards-back, clockwise-counterclockwise
+controller_analog_e_t controlscheme[]{
+  ANALOG_LEFT_X,
+  ANALOG_LEFT_Y,
+  ANALOG_RIGHT_X
+};
 
+//Control scheme featureset
+//array format: enable absolute mode, enable angle hold
+bool configoptions[]{
+  true,
+  true
+};
+
+*/
 //********************************************************************************//
 //actual controllers
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base(xdrivemotors);
-coordcontroller mover(base,bPID,xyaT);
-
+//coordcontroller mover(base,bPID,xyaT);
+//opcontrolcontroller useonlyinopcontrol(base,controlscheme,ctrl,bPID[2],configoptions);
 //********************************************************************************//
 //functions:
 double determinebiggest(double a, double b){
@@ -129,6 +146,7 @@ double isposorneg(double input){
   return input/fabs(input); //its supposted to return 1 or -1, fyi
 }
 
+//WARNING, CRAD AND TRAD MEAN NOTHING. TEST EACH IMPLEMENTATION
 double getrelrad(double crad, double trad){
   //note: untested but probably correct. Pls test
 /*  if (fabs(crad-trad) > M_PI) return -(2*M_PI-fabs(crad-trad))*isposorneg(crad-trad);
@@ -164,7 +182,7 @@ double determinesmallest(double a, double b){
 }
 
 //Below: doesnt work b/c header issues
-void basecontrollerdebug(basecontroller a){
+/*void basecontrollerdebug(basecontroller a){
   lcd::print(0, "TR motor: %f",a.vals[0]);
   lcd::print(1, "BR motor: %f",a.vals[1]);
   lcd::print(2, "BL motor: %f",a.vals[2]);
@@ -175,11 +193,11 @@ void trackingwheeldebug(odometrycontroller a) {
 lcd::print(0,"Left Encoder: %d", (a.left->get_value()));
 lcd::print(1,"Right Encoder: %d", (a.right->get_value()));
 lcd::print(2,"Back Encoder: %d", (a.back->get_value()));
-}//*/
+}/*
 void odometrycontrollerdebug(){
 lcd::print(0,"X: %f",xG);
 lcd::print(1,"Y: %f", yG);
 lcd::print(2,"Angle: %f", angleG);
 lcd::print(3,"Est Spd: %d in/s", (int)estspd);
 lcd::print(4, "Est Heading: %f", heading);
-}
+}*/
