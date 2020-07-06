@@ -86,7 +86,8 @@ struct coordcontroller{
     lcd::print(5,"yD: %f",yD);
     lcd::print(5,"rD: %f",rD);
     mBase->vectormove(xD,yD,rD,speed);
-    if (round(sqrt(xD*xD+yD*yD) + (rD/M_PI)*100) == 0) return true;
+    //less than 1 inch distance, and less than 2% angle offset to commit to next stage
+    if (round(sqrt(xD*xD+yD*yD) + (rD/M_PI)*50) == 0) return true;
     else return false;
   }
 
