@@ -27,8 +27,8 @@ void opcontrol(){
   opcontrolcontroller useonlyinopcontrol(base,controlscheme,bPID[2],configoptions);
   xyaT[0] = 20;
   xyaT[1] = 10;
-  xyaT[2] = M_PI/2;
-  while(true){
+  xyaT[2] = M_PI;
+/*  while(true){
     odo.posupdv2();
     odometrycontrollerdebug();
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
@@ -37,7 +37,7 @@ void opcontrol(){
     useonlyinopcontrol.move();
     if (ctrl.get_digital_new_press(DIGITAL_B)) configoptions[0] = !configoptions[0];
     delay(10);
-  };
+  };*/
 //below: test for autonomous
 /*  while(true){
     odo.posupdv2();
@@ -45,5 +45,5 @@ void opcontrol(){
     odometrycontrollerdebug();
     delay(10);
   }*/
-//  autonomous();
+  autonomous();
 }

@@ -72,8 +72,8 @@ struct coordcontroller{
     double yO = 0;
     //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
     //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
-    double xD = (xyaT[0]-xG)*cos(angleG)+(xyaT[1]-yG)*sin(angleG+M_PI/2); //relative distances to target
-    double yD = (xyaT[1]-yG)*cos(angleG+M_PI/2)+(xyaT[0]-xG)*sin(angleG); //relative distances to target
+    double xD = (xyaT[0]-xG)*cos(getrelrad(angleG-M_PI/2,0))+(xyaT[1]-yG)*cos(getrelrad(angleG,M_PI)); //relative distances to target
+    double yD = (xyaT[1]-yG)*sin(getrelrad(angleG,M_PI))+(xyaT[0]-xG)*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
     double rD = (getrelrad(angleG,xyaT[2]))*5; //VERY janky pls confirm if getrelrad works
   //  if ((sqrt(pow(xD,2)+pow(yD,2))) > 20) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
     //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
