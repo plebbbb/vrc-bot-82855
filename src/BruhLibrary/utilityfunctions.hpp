@@ -23,5 +23,11 @@ extern double rottodist(double rad, double radius);
 //degtorad: for user convience - converts degrees into radians
 extern double degtorad(double deg);
 
-//factorial 
+//factorial
 extern double factorial(double n);
+
+//determinesmallest: determines smallest val, not absolute
+extern double determinesmallest(double a, double b);
+
+//debug feature for odometry
+extern void odometrycontrollerdebug();

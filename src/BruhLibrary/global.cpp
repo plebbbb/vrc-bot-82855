@@ -12,7 +12,7 @@
 //********************************************************************************//
 //Variables:
 double speedmultiplier = 100; //IN PERCENT, 100 being 100%
-double angleG = 0;
+double angleG = M_PI/2;
 double xG = 0;
 double yG = 0;
 double xR = 0;
@@ -27,9 +27,9 @@ double vscalefac = 0;
 //ADIEncoder format: pin 1, pin2, inversed or not
 //Array format: Left, Right, Back
 ADIEncoder odencoders[3] = {
-  ADIEncoder(0,1,true),
-  ADIEncoder(2,3,false),
-  ADIEncoder(4,5,false)
+  ADIEncoder('C','D',true),
+  ADIEncoder('B','A',false),
+  ADIEncoder('F','E',true)
 };
 
 
@@ -55,7 +55,11 @@ motorw xdrivemotors[] = {
 //********************************************************************************//
 //PIDKvals format: Pk, Ik, Dk
 double PIDKvals[][3] = {
-  {1,1,1}
+  {7.5,0.0005,2},     //direct distance PID
+  {5,1.5,3},        //direct rotation PID for driver mode
+  {3,0,2},       //direct rotation PID
+  {2,0.05,1},       //heading offset PID
+  {3,0,1},          //direct X/Y axis PID
 };
 
 //********************************************************************************//
@@ -70,7 +74,8 @@ bool PIDSvals[][3] = {
 //********************************************************************************//
 //PIDL values: PID hard limit, I value hard limit
 double PIDLvals[][2] = {
-  {100,50}
+  {100,50},
+  {50,50}
 };
 
 //********************************************************************************//
@@ -100,21 +105,41 @@ dualScurve curvesets[] = {
 
 //PID for base navigation
 PID bPID[] = {
-  PID(PIDKvals[0],PIDSvals[0],PIDLvals[0]), //no idea what index 0 and 1 are for
-  PID(PIDKvals[0],PIDSvals[0],PIDLvals[0]),
-  PID(PIDKvals[0],PIDSvals[0],PIDLvals[0])
+  PID(PIDKvals[0],PIDSvals[0],PIDLvals[1]), //direct distance PID
+  PID(PIDKvals[2],PIDSvals[0],PIDLvals[1]), //direct rotation PID
+  PID(PIDKvals[1],PIDSvals[0],PIDLvals[0]), //direct rotation PID for driver mode
+  PID(PIDKvals[3],PIDSvals[0],PIDLvals[0]), //heading offset PID
+  PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct X axis PID
+  PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct Y axis PID
 };
 
 PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup for a motorF
 
+//********************************************************************************//
+/*
+//Control scheme configuration
+//array format: left-right, forwards-back, clockwise-counterclockwise
+controller_analog_e_t controlscheme[]{
+  ANALOG_LEFT_X,
+  ANALOG_LEFT_Y,
+  ANALOG_RIGHT_X
+};
 
+//Control scheme featureset
+//array format: enable absolute mode, enable angle hold
+bool configoptions[]{
+  true,
+  true
+};
+
+*/
 //********************************************************************************//
 //actual controllers
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base(xdrivemotors);
-coordcontroller mover(base,bPID,xyaT);
-
+//coordcontroller mover(base,bPID,xyaT);
+//opcontrolcontroller useonlyinopcontrol(base,controlscheme,ctrl,bPID[2],configoptions);
 //********************************************************************************//
 //functions:
 double determinebiggest(double a, double b){
@@ -128,10 +153,17 @@ double isposorneg(double input){
   return input/fabs(input); //its supposted to return 1 or -1, fyi
 }
 
+//WARNING, CRAD AND TRAD MEAN NOTHING. TEST EACH IMPLEMENTATION
 double getrelrad(double crad, double trad){
   //note: untested but probably correct. Pls test
-  if (fabs(trad-crad) > M_PI) return (2*M_PI-fabs(trad-crad))*isposorneg(trad-crad);
-  return (trad-crad)*isposorneg(trad-crad);
+/*  if (fabs(crad-trad) > M_PI) return -(2*M_PI-fabs(crad-trad))*isposorneg(crad-trad);
+  return (crad-trad);*/
+  //double scrad = fmod(crad,M_PI*2);
+//  double strad = fmod(trad,M_PI*2);
+  double rdval = (trad-crad);
+  if (rdval < -M_PI) return rdval+(M_PI*2);
+  if (rdval > M_PI) return -((M_PI*2)-rdval);
+  return rdval;
 }
 
 //this is pretty stupid
@@ -148,4 +180,31 @@ double degtorad(double deg){
 //recursive approach to computing factorials
 double factorial(double n){
   return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
+}
+
+//determine smallest functions
+double determinesmallest(double a, double b){
+  if (a > b) return b;
+  return a;
+}
+
+//Below: doesnt work b/c header issues
+/*void basecontrollerdebug(basecontroller a){
+  lcd::print(0, "TR motor: %f",a.vals[0]);
+  lcd::print(1, "BR motor: %f",a.vals[1]);
+  lcd::print(2, "BL motor: %f",a.vals[2]);
+  lcd::print(3, "TL motor: %f",a.vals[3]);
+  lcd::print(5, "Rot Ratio: %f",a.rotationalratio);
+}
+void trackingwheeldebug(odometrycontroller a) {
+lcd::print(0,"Left Encoder: %d", (a.left->get_value()));
+lcd::print(1,"Right Encoder: %d", (a.right->get_value()));
+lcd::print(2,"Back Encoder: %d", (a.back->get_value()));
+}*/
+void odometrycontrollerdebug(){
+lcd::print(0,"X: %f",xG);
+lcd::print(1,"Y: %f", yG);
+lcd::print(2,"Angle: %f", angleG);
+//lcd::print(3,"Est Spd: %d in/s", (int)estspd);
+//lcd::print(4, "Est Heading: %f", heading);
 }

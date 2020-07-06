@@ -105,9 +105,13 @@ struct motorw{
   - Directional control with speed controls
   - Rotational control with PID stabilization
 */
+//also its actually stupid efficient, at least the vector calculation parts. The if statements, idk.
+//we dont even call a single cos or sin function, and only do multiplication and adding, so its super fast
+//we make an assumption that there is always a motor which perfectly counters any unwanted forces tho, which works but also
+//means that we will end up relying a lot on heading PIDs for auton, alongside manual control not mapping perfectly to the joystick
 struct basecontroller{
   motorw* MAP; //sketchy pointer that points to the motorw array so we can use it later
-  double vals[4];
+  //double vals[4];
   double rotationalratio;
   basecontroller(motorw m[]){MAP = m;}
   /*vectormove: a universal movement function which takes x and y inputs,
@@ -121,7 +125,7 @@ struct basecontroller{
     //rotationalratio = 1;
     //above: very sketchy power distrubtion formula between rotation and translation
     for (int i = 0; i < sizeof(MAP); i++){
-      vals[i] = (spd*(((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio)) + rotationalratio));
+      //vals[i] = (spd*(((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio)) + rotationalratio));
       //calculation for the power of each motor, see discord #design-ideas for formula
       MAP[i].mot.move_velocity(spd*((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio) + rotationalratio));
       //above: rotationalratio code made even more sketchier, it doesnt even scale correctly I think
@@ -131,6 +135,54 @@ struct basecontroller{
   }
 };
 
-/*odometrycontroller: interface for ADI_Encoder to determine the position of the bot:
-  - Rotational and translational data updating
-*/
+//opcontrolcontroller: wrapper for basecontroller to be used during manual drive.
+//we may implement motorF features into it as the situation dictates
+  struct opcontrolcontroller{
+    basecontroller* ssc; //pointer to basecontroller
+    controller_analog_e_t* controls; //joystick inputs
+    bool* configuration; //config for code
+    double tang;
+    PID* rot;
+    opcontrolcontroller(basecontroller b, controller_analog_e_t* css, PID ro, bool* config){
+      ssc = &b; controls = css; ; rot = &ro; configuration = config; tang = angleG;}
+    //tbd - deal with interia issues from rotation at high speeds, PID insta targets what happens when analog stick is 0
+    void move(){
+      double rs = -ctrl.get_analog(controls[2]);
+      if (configuration[1]) rs = rotationcompute();
+      if (configuration[0]) relativemove(rs);
+      else absolutemove(rs);
+    }
+    double determinespeed(double p1, double p2, double p3){
+      return (speedmultiplier/127)*determinebiggest( //div by speedmultiplier/127 to scale joystick values to percentage values
+       fabs(p1),
+       determinebiggest(
+         fabs(p2),
+         fabs(p3)
+       )
+     );
+    }
+    double rotationcompute(){
+      if (ctrl.get_analog(controls[2])){tang = angleG; return -ctrl.get_analog(controls[2]);}
+      return rot->update(getrelrad(tang, angleG));
+    }
+    void relativemove(double rotation){
+      ssc->vectormove(
+        (double)ctrl.get_analog(controls[0]),
+        (double)ctrl.get_analog(controls[1]),
+        rotation,
+        determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
+      );
+    }
+    //a reminder, this is hard offset pi/2 counterclockwise to account for angleG = pi/2 for the forwards direction
+    //also I have no idea how to do this without an offset now
+    void absolutemove(double rotation){
+      ssc->vectormove(
+        (double)(ctrl.get_analog(controls[0])*cos(getrelrad(angleG-M_PI/2,0))+ctrl.get_analog(controls[1])*cos(getrelrad(angleG,M_PI))),
+        (double)(ctrl.get_analog(controls[1])*sin(getrelrad(angleG,M_PI))+ctrl.get_analog(controls[0])*sin(getrelrad(angleG-M_PI/2,0))),
+        rotation,
+        determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
+      );
+      lcd::print(6,"local x axis: %f", (ctrl.get_analog(controls[0])*cos(getrelrad(angleG-M_PI/2,0))+ctrl.get_analog(controls[1])*cos(getrelrad(angleG,M_PI))));
+      lcd::print(7,"local y axis: %f", (ctrl.get_analog(controls[1])*sin(getrelrad(angleG,M_PI))+ctrl.get_analog(controls[0])*sin(getrelrad(angleG-M_PI/2,0))));
+    }
+  };

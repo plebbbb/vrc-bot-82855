@@ -210,11 +210,11 @@ public:
     else PIDa[0] = err;
     if (Imode) PIDa[1] += (err-PIDa[1])/ratios[3];
     else PIDa[1] += err;
-    if (Izerocutoff && in == 0) PIDa[1] = 0;
+    if (Izerocutoff == true && round(in*10) == 0) PIDa[1] = 0;
     if (fabs(PIDa[1]) > maxIlimit) PIDa[1] = isposorneg(PIDa[1])*maxIlimit;
     PIDa[2] = err-lasterror;
     lasterror = err;
     double final = PIDa[0]*ratios[0] + PIDa[1]*ratios[1] + PIDa[2]*ratios[2];
-    return isposorneg(final)*determinebiggest(fabs(final),maxlimit);
+    return isposorneg(final)*determinesmallest(fabs(final),maxlimit);
   };
 };
