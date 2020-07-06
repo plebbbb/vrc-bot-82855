@@ -38,7 +38,9 @@ struct odometrycontroller{
     if (angleG < 0) angleG = angleG + (M_PI*2);
     estspd = sqrt(xLN*xLN + yLN*yLN)*100; //x100 to convert to in/s from in/10ms
     if (xC != 0) heading = fmod(atan2(yC,xC),(2*M_PI));
-    else heading = 0;
+    else if (yC > 0) heading = M_PI/2; //if moving directly up
+    else if (yC < 0) heading = (3*M_PI)/2; //if moving directly down
+    else heading = 0; //if not moving
     left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
     right->reset();
     back->reset();
@@ -63,31 +65,51 @@ struct coordcontroller{
   basecontroller* mBase;
   PID* axiscontrollers; //the initial plan called for 3 PID controllers to allow for smooth motion curves, but for now we have a direct line approach
   //double* xyaT; //we are gonna try a potentially stupid approach, where we dont call coordcontroller but instead change the tgt coords directly
-  coordcontroller(basecontroller a, PID b[3]){mBase = &a; axiscontrollers = b;}
+  coordcontroller(basecontroller a, PID b[]){mBase = &a; axiscontrollers = b;}
   /*returns true when target is reached
     potential camera implementation: overload update with version that replaces r and perp with camera controls
     this overload would input the desired color profile that the camera is looking for.
     note that constructor must be updated for this*/
   bool update(){
-    double yO = 0;
+    //double yO = 0;
     //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
     //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
-    double xD = (xyaT[0]-xG)*cos(getrelrad(angleG-M_PI/2,0))+(xyaT[1]-yG)*cos(getrelrad(angleG,M_PI)); //relative distances to target
-    double yD = (xyaT[1]-yG)*sin(getrelrad(angleG,M_PI))+(xyaT[0]-xG)*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
-    double rD = (getrelrad(angleG,xyaT[2]))*5; //VERY janky figure out better solution than a hard multiplier
-  //  if ((sqrt(pow(xD,2)+pow(yD,2))) > 20) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
+    double xGD = (xyaT[0]-xG); //global x distance
+    double yGD = (xyaT[1]-yG); //global y distance
+    double dist = sqrt(xGD*xGD+yGD*yGD);
+    double xD = 0;
+    double yD = 0;
+    double rD = 0; //VERY janky figure out better solution than a hard multiplier
+    //we switch modes into a direct axis specific PID mode once we get close to prevent circular movement
+    //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
+    if (dist < 2.5){ //trigger x-y specific PID on activation
+      xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
+      yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
+      rD = axiscontrollers[1].update(-7.5*(getrelrad(angleG,xyaT[2])));
+    }else{
+      double updXval = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
+      double updYval = axiscontrollers[5].update(-yGD);
+      xD = updXval*cos(getrelrad(angleG-M_PI/2,0))+updYval*cos(getrelrad(angleG,M_PI));
+      yD = updYval*sin(getrelrad(angleG,M_PI))+updXval*sin(getrelrad(angleG-M_PI/2,0));
+      rD = axiscontrollers[1].update(-20*(getrelrad(angleG,xyaT[2])));
+    }
+
+    //if ((sqrt(pow(xD,2)+pow(yD,2))) > 10) yO = axiscontrollers[3].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
     //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
     //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
     //xD+=yO*sin(atan2(xD,yD));
     //yD+=yO*cos(atan2(xD,yD));
-    double speed = fabs(axiscontrollers[0].update(sqrt(xD*xD+yD*yD)))+fabs(axiscontrollers[1].update(rD));
+    if(isnanf(rD)) rD = 0;
+    double LPID = fabs(axiscontrollers[0].update(dist));
+    double RPID = fabs(rD);
+    double speed = determinesmallest(70, LPID+RPID);
     lcd::print(3,"Speed: %f",speed);
-    lcd::print(4,"xD: %f", xD);
-    lcd::print(5,"yD: %f",yD);
-    lcd::print(5,"rD: %f",rD);
+    lcd::print(4,"dist: %f", dist);
+    lcd::print(5,"linear PID: %f", LPID);
+    lcd::print(6,"rotational PID: %f", RPID);
     mBase->vectormove(xD,yD,rD,speed);
-    //less than 1 inch distance, and less than 2% angle offset to commit to next stage
-    if (round(sqrt(xD*xD+yD*yD) + (rD/M_PI)*50) == 0) return true;
+        //less than 2 inch distance, and less than 2% angle offset to commit to next stage
+    if (round(dist/2 + fabs(rD/M_PI)*50) == 0) return true;
     else return false;
   }
 

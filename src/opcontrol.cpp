@@ -37,9 +37,9 @@ void opcontrol(){
     useonlyinopcontrol.move();
     if (ctrl.get_digital_new_press(DIGITAL_B)) configoptions[0] = !configoptions[0];
     delay(10);
-  };*/
+  }; /*//*
 //below: test for autonomous
-/*  while(true){
+  while(true){
     odo.posupdv2();
     mover.update();
     odometrycontrollerdebug();

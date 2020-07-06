@@ -55,8 +55,11 @@ motorw xdrivemotors[] = {
 //********************************************************************************//
 //PIDKvals format: Pk, Ik, Dk
 double PIDKvals[][3] = {
-  {1.5,0.15,1.25},
-  {5,1.5,3}
+  {7.5,0.0005,2},     //direct distance PID
+  {5,1.5,3},        //direct rotation PID for driver mode
+  {3,0,2},       //direct rotation PID
+  {2,0.05,1},       //heading offset PID
+  {3,0,1},          //direct X/Y axis PID
 };
 
 //********************************************************************************//
@@ -71,7 +74,8 @@ bool PIDSvals[][3] = {
 //********************************************************************************//
 //PIDL values: PID hard limit, I value hard limit
 double PIDLvals[][2] = {
-  {100,50}
+  {100,50},
+  {50,50}
 };
 
 //********************************************************************************//
@@ -101,9 +105,12 @@ dualScurve curvesets[] = {
 
 //PID for base navigation
 PID bPID[] = {
-  PID(PIDKvals[0],PIDSvals[0],PIDLvals[0]), //no idea what index 0 and 1 are for
-  PID(PIDKvals[0],PIDSvals[0],PIDLvals[0]),
-  PID(PIDKvals[1],PIDSvals[0],PIDLvals[0])
+  PID(PIDKvals[0],PIDSvals[0],PIDLvals[1]), //direct distance PID
+  PID(PIDKvals[2],PIDSvals[0],PIDLvals[1]), //direct rotation PID
+  PID(PIDKvals[1],PIDSvals[0],PIDLvals[0]), //direct rotation PID for driver mode
+  PID(PIDKvals[3],PIDSvals[0],PIDLvals[0]), //heading offset PID
+  PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct X axis PID
+  PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct Y axis PID
 };
 
 PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup for a motorF

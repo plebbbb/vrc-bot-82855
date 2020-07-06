@@ -22,9 +22,10 @@ procedure documentation:
 //postionsetTEST: Benchmark test to ensure the functionality of the motors
 double positionsetTEST[][3] = {
   {0,0,M_PI/2},
-  {20,0,M_PI},
-  {20,20,(3*M_PI)/2},
-  {0,20,M_PI*2},
+  {30,15,M_PI},
+  {10,10,(3*M_PI)/2},
+  {20,25,(M_PI)/5},
+  {0,30,M_PI*2},
   {0,0,M_PI/2}
 };
 
