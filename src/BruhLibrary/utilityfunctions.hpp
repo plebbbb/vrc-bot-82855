@@ -2,6 +2,7 @@
 #pragma once
 //********************************************************************************//
 /*UTLITITY FUNCTIONS*/
+//WARNING: MOST OF THESE ARE SUPER SKECTHY AND PROBABLY DONT WORK
 
 //for some reason, sort() is broken so i have to diy something,
 /*NOTE: USING THIS IS ULTRA RISKY DUE TO DIRECTLY SORTING THE ARR
@@ -31,3 +32,9 @@ extern double determinesmallest(double a, double b);
 
 //debug feature for odometry
 extern void odometrycontrollerdebug();
+
+//copies an array, tgt is changed to ref, assume same size
+extern void arraycopy(double tgt[], double ref[]);
+
+//checks array equlivancy, assumes same size
+extern bool isarrsame(double a[], double b[], int size);

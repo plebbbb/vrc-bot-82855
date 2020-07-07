@@ -55,11 +55,11 @@ motorw xdrivemotors[] = {
 //********************************************************************************//
 //PIDKvals format: Pk, Ik, Dk
 double PIDKvals[][3] = {
-  {7.5,0.0005,2},     //direct distance PID
+  {1,0,0.1},     //direct distance PID
   {5,1.5,3},        //direct rotation PID for driver mode
-  {3,0,2},       //direct rotation PID
+  {4,0,0.25},       //direct rotation PID
   {2,0.05,1},       //heading offset PID
-  {3,0,1},          //direct X/Y axis PID
+  {3,0,1.5},          //direct X/Y axis PID
 };
 
 //********************************************************************************//
@@ -68,7 +68,8 @@ S-curve enable/disable,
 fractional I enable/disable,
 I hardstop at target enable/disable*/
 bool PIDSvals[][3] = {
-  {false,false,true}
+  {false,false,true}, //standard
+  {true,false,true}   //should be for motorFs and any speed PIDs
 };
 
 //********************************************************************************//
@@ -85,17 +86,20 @@ double PIDLvals[][2] = {
 //Index 0: max spd, Index 1: slope, Index 2: horizontal offset, Index 3: vertical offset
 //max spd should be always positive!
 double Scurvevals[][4] = {
-  {127,0.2,24.2,0} //default settings from the desmos link
+  {127,0.2,24.2,0},    //default settings from the desmos link
+  {100,0.335,13,3},  //settings for the direction distance PID's stopping half
+  {100,0.32,7,3}  //settings for the direction distance PID's starting half
 };
 
 //S curves
 curveS curves[] = {
-  curveS(Scurvevals[0])
+  curveS(Scurvevals[1]),
+  curveS(Scurvevals[2])
 };
 
 //dualScurve wrapper
 dualScurve curvesets[] = {
-  dualScurve(curves[0]) //default desmos link, flipped past 50%
+  dualScurve(curves[0],curves[1]) //default desmos link, flipped past 50%
 };
 
 
@@ -105,7 +109,7 @@ dualScurve curvesets[] = {
 
 //PID for base navigation
 PID bPID[] = {
-  PID(PIDKvals[0],PIDSvals[0],PIDLvals[1]), //direct distance PID
+  PID(PIDKvals[0],PIDSvals[1],PIDLvals[1]), //direct distance PID
   PID(PIDKvals[2],PIDSvals[0],PIDLvals[1]), //direct rotation PID
   PID(PIDKvals[1],PIDSvals[0],PIDLvals[0]), //direct rotation PID for driver mode
   PID(PIDKvals[3],PIDSvals[0],PIDLvals[0]), //heading offset PID
@@ -131,8 +135,14 @@ bool configoptions[]{
   true,
   true
 };
-
 */
+//********************************************************************************//
+//temporary BezierNP for testing's sake
+
+
+
+
+
 //********************************************************************************//
 //actual controllers
 Controller ctrl = E_CONTROLLER_MASTER;
@@ -188,6 +198,22 @@ double determinesmallest(double a, double b){
   return a;
 }
 
+//jank copy array
+ void arraycopy(double tgt[], double ref[]){
+  for (int i = 0; i < sizeof(ref)/sizeof(*ref); i++){
+    tgt[i] = ref[i];
+  }
+}
+
+//checks array equality
+ bool isarrsame(double a[], double b[], int size){
+   for (int i = 0; i < size; i++){
+     if (a[i]!=b[i]) return false; //peak jank, if their difference isnt 0 they arent the same
+   }
+   return true;
+ }
+
+//********************************************************************************//
 //Below: doesnt work b/c header issues
 /*void basecontrollerdebug(basecontroller a){
   lcd::print(0, "TR motor: %f",a.vals[0]);

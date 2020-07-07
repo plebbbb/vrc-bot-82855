@@ -7,7 +7,7 @@ using namespace pros;
   //curveS: a single S curve
   //Constraints(suggested): range: 0 to 50, upwards.  max height 127;
   //TBD, maybe actually calculate proper motion curves later and emulate them with curveS
-class curveS{
+struct curveS{
   double* vars;
 public:
   curveS(double arr[]){vars = arr;}
@@ -21,14 +21,23 @@ public:
   the current pointer access method is ok for these b/c they dont store anything motor-specific,
   its literally just a formula*/
 struct dualScurve{
-  curveS* a = NULL;
-  curveS* b = NULL;
+  curveS* a;
+  curveS* b;
   dualScurve(curveS c, curveS d){a=&c; b=&d;}
   dualScurve(curveS c){a=&c;}
-  double getval(double pos){
-    if (pos < 50) return a->getval(pos);
-    else if (b == NULL) return a->getval(50-pos);
-    return b->getval(50-pos);
+  double getval(double ps){
+    double pos = fabs(ps);
+  //  lcd::print(1,"given value: %f", pos);
+    if (pos < 50) {
+      lcd::print(2,"return value: %f", a->getval(pos));
+      return a->getval(pos);
+    }
+    else if (!b) {
+      lcd::print(2,"return value: %f", a->getval(100-pos));
+      return a->getval(100-pos);
+    }
+    lcd::print(2,"return value: %f", b->getval(100-pos));
+    return b->getval(100-pos);
     //for the part past 50%, we flip the curveS, so that we only need one curve from 0-50 for each different profile
   };
 };
@@ -37,14 +46,14 @@ struct dualScurve{
   /*This is a full on proper n-point bezier curve, where we can add
   as many transformations as we want but only 2 garanteed target locations
   */
-/*class beziernp{
+class beziernp{
 private:
   double** coords;
   double* binomialfactors; //double may be too small ngl
   int size; //coordinate size
 public:
   //sinfo and einfo format: x, y, angle(rads), einfo 4th param is target end heading
-  beziernp(double sinfo[3], double einfo[3], double offsetcoords[][2]){
+/*  beziernp(double sinfo[3], double einfo[3], double offsetcoords[][2]){
     size = sizeof(offsetcoords)/sizeof(double[2])+4;
     coords = (double**)new double[size][2]; //how does casting to double** work here, i have no clue
     coords[0][0] = sinfo[0];
@@ -59,18 +68,19 @@ public:
     coords[size][1] = einfo[1];
     std::copy(offsetcoords[0],offsetcoords[size-3],coords[1]);//I'm honestly not too sure this works, pls test in eclipse or something
     //above: manual array size calc here cuz idk how to cast this one for .size()
-  }
+*/ //}
   beziernp(double sinfo[3], double einfo[3]){
+    computebinomialfactor();
     coords = (double**)new double[4][2];
     size = 4;
     coords[0][0] = sinfo[0];
     coords[0][1] = sinfo[1];
     /*below: these values are here to prevent harsh turns due to existing momentum
-    by applying a transformation in the current direction of movement*//*
+    by applying a transformation in the current direction of movement*/
     coords[1][0] = sinfo[0]+cos(sinfo[2])*estspd*vscalefac;
     coords[1][1] = sinfo[1]+sin(sinfo[2])*estspd*vscalefac;
-    coords[size-1][0] = sinfo[0]+cos(sinfo[2])*127*vscalefac; //127 is a placeholder
-    coords[size-1][1] = sinfo[1]+sin(sinfo[2])*127*vscalefac;
+    coords[size-1][0] = sinfo[0]+cos(sinfo[2])*5*vscalefac; //127 is a placeholder
+    coords[size-1][1] = sinfo[1]+sin(sinfo[2])*5*vscalefac;
     coords[size][0] = einfo[0];
     coords[size][1] = einfo[1];
   }
@@ -94,7 +104,7 @@ public:
   //variation two, probably higher chance of working than the other option, but probably
   //a lot more taxing, we may actually hit performance issues from this once
   //https://www.desmos.com/calculator/xlpbe9bgll
-  /*
+
   void getvalF(double t){
     double x = 0; double y = 0;
     for (int i = 0; i < size; i++){
@@ -157,8 +167,8 @@ struct compositebezier{
 /*PID: generic PID system*/
 //NOTE: HAS NOT BEEN TESTED PLS TEST
 //ANOTHER NOTE: DEFAULT TGT = 0
-class PID{
-private:
+struct PID{
+//private:
   /*Integral mode configurations:
   false: Direct I scaling - 100% of I is added each cycle
   true: Asymptope I - I approaches the max*/
@@ -187,7 +197,7 @@ private:
   double PIDa[4] = {0};
 
   double lasterror = 0;
-public:
+//public:
   PID(double scalers[], bool ms[], double limits[]){
     ratios = scalers; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
@@ -206,7 +216,7 @@ public:
   }
   double update(double in){
     double err = (PIDa[3]-in);
-    if (Pmode) PIDa[0] = isposorneg(err)*Scurve->getval(fabs(err));
+    if (Pmode) PIDa[0] = isposorneg(err)*Scurve->getval(err);
     else PIDa[0] = err;
     if (Imode) PIDa[1] += (err-PIDa[1])/ratios[3];
     else PIDa[1] += err;
@@ -214,7 +224,13 @@ public:
     if (fabs(PIDa[1]) > maxIlimit) PIDa[1] = isposorneg(PIDa[1])*maxIlimit;
     PIDa[2] = err-lasterror;
     lasterror = err;
+    if (isnanf(PIDa[0])) PIDa[0] = 0;
+    if (isnanf(PIDa[1])) PIDa[1] = 0;
+    if (isnanf(PIDa[2])) PIDa[2] = 0;
+  //  lcd::print(3,"P: %f", PIDa[0]);
     double final = PIDa[0]*ratios[0] + PIDa[1]*ratios[1] + PIDa[2]*ratios[2];
+    //lcd::print(4,"I: %f", PIDa[1]);
+    //lcd::print(5,"D: %f", PIDa[2]);
     return isposorneg(final)*determinesmallest(fabs(final),maxlimit);
   };
 };

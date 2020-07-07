@@ -63,6 +63,8 @@ struct odometrycontroller{
 */
 struct coordcontroller{
   basecontroller* mBase;
+  double oldxyat[3] = {0,0,0};
+  double distance;
   PID* axiscontrollers; //the initial plan called for 3 PID controllers to allow for smooth motion curves, but for now we have a direct line approach
   //double* xyaT; //we are gonna try a potentially stupid approach, where we dont call coordcontroller but instead change the tgt coords directly
   coordcontroller(basecontroller a, PID b[]){mBase = &a; axiscontrollers = b;}
@@ -77,20 +79,31 @@ struct coordcontroller{
     double xGD = (xyaT[0]-xG); //global x distance
     double yGD = (xyaT[1]-yG); //global y distance
     double dist = sqrt(xGD*xGD+yGD*yGD);
+    if (!isarrsame(xyaT, oldxyat, 3)) {
+      distance = dist;
+      double sl = determinesmallest(100, 0.65*distance+20); //linear formula for s curve speed limit
+      axiscontrollers[0].Scurve->a->vars[0] = sl;
+      axiscontrollers[0].Scurve->b->vars[0] = sl;
+      for(int i = 0; i < 3; i++){oldxyat[i] = xyaT[i];}
+    }
     double xD = 0;
     double yD = 0;
+    double xCC = 0; //independent X axis PID
+    double yCC = 0; //independent Y axis PID
     double rD = 0; //VERY janky figure out better solution than a hard multiplier
     //we switch modes into a direct axis specific PID mode once we get close to prevent circular movement
     //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
+    xCC = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
+    yCC = axiscontrollers[5].update(-yGD);
+    if (isnanf(xCC)) xCC = 0;
+    if (isnanf(yCC)) yCC = 0;
     if (dist < 2.5){ //trigger x-y specific PID on activation
       xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
       yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
       rD = axiscontrollers[1].update(-7.5*(getrelrad(angleG,xyaT[2])));
     }else{
-      double updXval = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
-      double updYval = axiscontrollers[5].update(-yGD);
-      xD = updXval*cos(getrelrad(angleG-M_PI/2,0))+updYval*cos(getrelrad(angleG,M_PI));
-      yD = updYval*sin(getrelrad(angleG,M_PI))+updXval*sin(getrelrad(angleG-M_PI/2,0));
+      xD = xCC*cos(getrelrad(angleG-M_PI/2,0))+yCC*cos(getrelrad(angleG,M_PI));
+      yD = yCC*sin(getrelrad(angleG,M_PI))+xCC*sin(getrelrad(angleG-M_PI/2,0));
       rD = axiscontrollers[1].update(-20*(getrelrad(angleG,xyaT[2])));
     }
 
@@ -100,16 +113,20 @@ struct coordcontroller{
     //xD+=yO*sin(atan2(xD,yD));
     //yD+=yO*cos(atan2(xD,yD));
     if(isnanf(rD)) rD = 0;
-    double LPID = fabs(axiscontrollers[0].update(dist));
-    double RPID = fabs(rD);
+    double LPID = fabs(axiscontrollers[0].update(fabs(100*(dist/distance)))); //axiscontrollers is now on a percent basis
+    if(isnanf(LPID)) LPID = 0; //this shouldnt have to exist, it only means that the PID is borked somewhere
+    //double LPID = fabs(axiscontrollers[0].update(dist));
+    //double LPID = fabs(xCC) + fabs(yCC);
+    double RPID = determinesmallest(fabs(rD),25);
     double speed = determinesmallest(70, LPID+RPID);
+    lcd::print(1,"S curve cap:%f",axiscontrollers[0].Scurve->b->vars[0]);
     lcd::print(3,"Speed: %f",speed);
-    lcd::print(4,"dist: %f", dist);
+    lcd::print(4,"percent tgt: %f", 100*(dist/distance));
     lcd::print(5,"linear PID: %f", LPID);
     lcd::print(6,"rotational PID: %f", RPID);
     mBase->vectormove(xD,yD,rD,speed);
-        //less than 2 inch distance, and less than 2% angle offset to commit to next stage
-    if (round(dist/2 + fabs(rD/M_PI)*50) == 0) return true;
+        //less than 4 inch distance, and less than 4% angle offset to commit to next stage
+    if (round(dist/4 + fabs(rD/M_PI)*25) == 0) return true;
     else return false;
   }
 

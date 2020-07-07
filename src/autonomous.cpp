@@ -41,7 +41,7 @@ void autonomous(){
     odo.posupdv2();
     //the idea for this if statement is that it calls all updates
     //and only passes once everything is done, before updating the variables
-    odometrycontrollerdebug();
+    //odometrycontrollerdebug();
     if (mover.update()/* && (motorf object).PID_UPDATE_CYCLE ....*/ && cycle < sizeof(positionsetTEST)/sizeof(*positionsetTEST)-1){
       /*TBD: Make the movement array into a 3d array,
         have the third dimension be for each different auton
