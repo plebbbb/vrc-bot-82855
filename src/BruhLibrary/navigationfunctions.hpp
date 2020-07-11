@@ -81,7 +81,7 @@ struct coordcontroller{
     double dist = sqrt(xGD*xGD+yGD*yGD);
     if (!isarrsame(xyaT, oldxyat, 3)) {
       distance = dist;
-      double sl = determinesmallest(100, 0.65*distance+20); //linear formula for s curve speed limit
+      double sl = determinesmallest(100, 0.75*distance+20); //linear formula for s curve speed limit
       axiscontrollers[0].Scurve->a->vars[0] = sl;
       axiscontrollers[0].Scurve->b->vars[0] = sl;
       for(int i = 0; i < 3; i++){oldxyat[i] = xyaT[i];}

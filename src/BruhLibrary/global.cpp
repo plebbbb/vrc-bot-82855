@@ -62,6 +62,15 @@ double PIDKvals[][3] = {
   {3,0,1.5},          //direct X/Y axis PID
 };
 
+//FOR REFRENCE: below is V1.215, where we had decent direct PID performance
+/*
+double PIDKvals[][3] = {
+  {7.5,0.0005,2},     //direct distance PID
+  {5,1.5,3},        //direct rotation PID for driver mode
+  {3,0,2},       //direct rotation PID
+  {2,0.05,1},       //heading offset PID
+  {3,0,1},          //direct X/Y axis PID
+}*/
 //********************************************************************************//
 /*PIDKvals format:
 S-curve enable/disable,

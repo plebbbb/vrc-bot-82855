@@ -118,10 +118,11 @@ struct basecontroller{
   magnitude is irrelevant in this case, use spd to determine speed*/
   void vectormove(double x, double y, double r, double spd){
     spd = spd*(BASE_MOTOR_RPM/100); //adjustments to max out performance
+    double xyspeedlimit = fabs(x)+fabs(y);
     double biggest = determinebiggest(fabs(x),fabs(y));
-    rotationalratio = r/(determinebiggest(fabs(x),fabs(y))+fabs(r)); //this should be above x and y scale conversion
-    if (x != 0) x = x/biggest; //x scale conversion
-    if (y != 0) y = y/biggest; //y scale conversion
+    rotationalratio = r/(biggest+fabs(r)); //this should be above x and y scale conversion
+    if (x != 0) x = x/xyspeedlimit; //x scale conversion
+    if (y != 0) y = y/xyspeedlimit; //y scale conversion
     //rotationalratio = 1;
     //above: very sketchy power distrubtion formula between rotation and translation
     for (int i = 0; i < sizeof(MAP); i++){
