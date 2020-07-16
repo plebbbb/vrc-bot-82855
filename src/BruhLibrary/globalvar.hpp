@@ -67,3 +67,6 @@ extern double vscalefac;
 //opcontrol configuration
 extern controller_analog_e_t controlscheme[];
 extern bool configoptions[];
+
+//Pascal's triangle
+extern const std::vector<short> Ptriangle[];
