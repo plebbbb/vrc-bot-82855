@@ -5,7 +5,7 @@ using namespace pros;
 #pragma once
 
   //curveS: a single S curve
-  //Constraints(suggested): range: 0 to 50, upwards.  max height 127;
+  //Constraints(suggested): range: 0 to 50, upwards.  max height 100;
   //TBD, maybe actually calculate proper motion curves later and emulate them with curveS
 struct curveS{
   double* vars;
@@ -20,6 +20,10 @@ public:
   /*dualScurve should extend curveS, also should be an interface ngl so we can use both one or two
   the current pointer access method is ok for these b/c they dont store anything motor-specific,
   its literally just a formula*/
+  //TBD: scale dualScurve to actual time values. an S curve is supposed to be relative to time, not displacement like we use it
+  //Even right now it still outperforms raw PIDs, but we will get better performance if we adjust it
+  //To do that, we have to unconvert the area(the displacement) of the curve into its corrospondent speed in the S curve
+  //this requires some calc stuff so it's gonna take a while
 struct dualScurve{
   curveS* a;
   curveS* b;
@@ -42,18 +46,19 @@ struct dualScurve{
   };
 };
 
-  //beziernp: a candidate approach for our path finding solution
+  //beziernp: a raw N-point bezier curve
   /*This is a full on proper n-point bezier curve, where we can add
   as many transformations as we want but only 2 garanteed target locations
   */
+
 class beziernp{
     double (*coords)[2];
     int size; //coordinate size
-    double CCM;
     //params: Coordinates of NP bezier, amount of coordinates(not an index)
     //and yes, I actually need the size thing cuz pointers dont pass along the actual size
+  public:
     beziernp(double points[][2], int sie):size(sie){
-  	  coords = points;
+  	  coords = points; //fancy speed and heading configurations precomputed in compositebezier to reduce load
     }
     //variation two, probably higher chance of working than the other option, but probably
     //a lot more taxing, we may actually hit performance issues from this once
@@ -69,37 +74,53 @@ class beziernp{
       xyaT[1] = y;
     }
     //formatting: t is iteration position, k is index, v is coordinate
-    //TBD: precompute these as well, we just gotta set a fixed point resolution limit
+    //TBD: precompute these as well, we just gotta set a fixed point resolution limit then throw this in eclipse or something,
+    //and have it print out a bunch of datasets which we paste in. We probably have enough memory
+  private:
     double getCCF(double t, double k){
       return (Ptriangle[size-1][k])*pow((1-t),size-1-k)*pow(t,k); //to save performance we calc this once per coord
     }
 };
-//compositebezier: another candidate approach for path finding
-/*This is a piecewise bezier curve approach using beziernp instances, of which
-will have 4 default offset points each, two for end points, two for heading targets*//*
-struct compositebezier{
-  std::vector<beziernp> beziers; //ngl shoulda started running vectors a lot sooner
-  int size;
-  //arr config: include the bezier from your current positon too
-  compositebezier(beziernp arr[]){
-    size = sizeof(arr)/sizeof(beziernp);
-    for (int i = 0; i < size; i++) beziers.push_back(arr[i]);
-  }
-  //mvcoords config - do not include the current position, only future positions
-  //new bezier curve is generated using current point
-  compositebezier(double mvcoords[][3]){
-    size = sizeof(mvcoords)/sizeof(double[3])+1;
-    beziers.push_back(beziernp(mvcoords[0],mvcoords[0]));
-    for (int i = 1; i < size; i++){
-      beziers.push_back(beziernp(mvcoords[0],mvcoords[1]));
+
+//composite N-point bezier curve, currently set up to only go to degree 4. Custom points dataset to be implemented
+//for the moment, active speed and trajectory controls are going to be possible by code design, but we will use precalculated values for now until odometrycontroller's estimations are fixed
+//to implement that, each bezier must be generated at runtime upon completion of the last bezier, using the
+//velocity and heading values as subsitutes for second point of the bezier.
+class compositebezier{
+  int size; //could be a pointer at the moment I think this is just wasting memory but at the same time a pointer might be bigger than an int
+  std::vector<beziernp> genarr; //WARNING: appending to this thing can kill your pointers if it has to resize itself to fit in the appended element
+public:
+  //This constructor is for hard set degree 4 composites
+  //data params: x, y, starting angle, ending angle
+  //use the length value(raw size() output), not max index for size
+  compositebezier(double data[][4], int len):size(len){
+    for(int i = size-1; i > 0; i--){ //tbd change to an std::vector.insert if possible
+      double params[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
+        {data[i][0],data[i][1]},
+        {cos(data[i][2]),sin(data[i][2])}, //Speed configuration will be dealt with externally in the speed controller
+        {-cos(data[i][3]),-sin(data[i][3])},  //so basically we will access params and multiply these values to do the speed transformation
+        {data[i+1][0],data[i+1][1]}
+      };
+      /*One of the galaxy brain things we do here is due to the way which std::vector deals with popping things out of its storage
+      when one deletes something, everything behind it must get shifted down, so if index 1 is gone, index 2 is the new index 1
+      in the case when this happens, std::vector moves the memory addresses of those shifted indexes, which screws up our pointers,
+      potentially making active speed and trajectory transformations impossible. By appending from the last point first in the for loop
+      what we manage to do is to shift nothing when we delete parts of the path we've already taken. This lets us have the option to save
+      some memory by deleting completed parts of the path compared to the alternate approach of listing down which bezier we are on
+      */
+      //in addition it also boosts performance if we choose to delete over alternative options cuz memory transfering can get tetious
+      genarr.push_back(beziernp(params,4));
     }
   }
+  //safe, no deletion mode. In retrospect this is probably sufficient. Each beziernp is like 8 bytes so we shouldn't see any issues given that we have like 40MB of usable memory
+  void getvalnd(double pos){
+    short ind = floor(pos); //tbd delete for memory?
+    genarr.at(size-1-ind).getvalF(pos-floor(pos));
+  };
 };
-*/
 
 /*PID: generic PID system*/
-//NOTE: HAS NOT BEEN TESTED PLS TEST
-//ANOTHER NOTE: DEFAULT TGT = 0
+//NOTE: DEFAULT TGT = 0
 struct PID{
 //private:
   /*Integral mode configurations:
