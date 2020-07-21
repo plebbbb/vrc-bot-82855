@@ -83,8 +83,10 @@ struct coordcontroller{
       distance = dist;
       double sl = determinesmallest(100, 0.75*distance+20); //linear formula for s curve speed limit
       axiscontrollers[0].Scurve->a->vars[0] = sl;
-      axiscontrollers[0].Scurve->b->vars[0] = sl;
-      for(int i = 0; i < 3; i++){oldxyat[i] = xyaT[i];}
+      axiscontrollers[0].Scurve->b->vars[0] = sl; //could be jank if there isnt a different downward S curve
+      //shouldnt be a problem tho cuz I dont think we ever deal with that case. this is here if u get memory errors
+      //for(int i = 0; i < 3; i++){oldxyat[i] = xyaT[i];}
+      arraycopy(oldxyat, xyaT, 3); //TEST TO SEE IF THIS ACTUALLY WORKS NOW
     }
     double xD = 0;
     double yD = 0;
@@ -119,98 +121,105 @@ struct coordcontroller{
     //double LPID = fabs(xCC) + fabs(yCC);
     double RPID = determinesmallest(fabs(rD),25);
     double speed = determinesmallest(70, LPID+RPID);
-    lcd::print(1,"S curve cap:%f",axiscontrollers[0].Scurve->b->vars[0]);
+/*    lcd::print(1,"S curve cap:%f",axiscontrollers[0].Scurve->b->vars[0]);
     lcd::print(3,"Speed: %f",speed);
     lcd::print(4,"percent tgt: %f", 100*(dist/distance));
     lcd::print(5,"linear PID: %f", LPID);
-    lcd::print(6,"rotational PID: %f", RPID);
+    lcd::print(6,"rotational PID: %f", RPID);*/
     mBase->vectormove(xD,yD,rD,speed);
-        //less than 4 inch distance, and less than 4% angle offset to commit to next stage
-    if (round(dist/4 + fabs(rD/M_PI)*25) == 0) return true;
+        //less than 2 inch distance, and less than 2% angle offset to commit to next stage
+    if (round(dist/4 + fabs(rD/(M_PI*2))*25) == 0) return true;
     else return false;
   }
 
   //this variation is for usage with motionpaths, where axiscontrollers merely maintains the speed target given by TSP
-  bool update(double TSP){
-    double yO = 0;
-    //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
-    //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
-    double xD = (xG-xyaT[0])*sin(angleG)+(yG-xyaT[1])*cos(angleG); //relative distances to target
-    double yD = (yG-xyaT[1])*sin(angleG)+(xG-xyaT[0])*cos(angleG); //relative distances to target
-    //unsure about recent correction from sin(angleG-pi/2) to cos(angleG), the thing is inversed but my initial math is probably wrong
-    double rD = getrelrad(angleG,xyaT[2]); //VERY janky pls confirm if getrelrad works
-    if ((sqrt(pow(xD,2)+pow(yD,2))) > 5) yO = axiscontrollers[2].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
-    //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
-    //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
-    xD+=yO*sin(atan2(xD,yD));
-    yD+=yO*cos(atan2(xD,yD));
-    mBase->vectormove(xD,yD,rD,
-      //above: unsure about subtracting yO or adding it
-      //below: we do fabs because basecontroller already handles backwards vectors, so reversing power is useless
-      fabs(axiscontrollers[0].update(TSP))+
-      fabs(axiscontrollers[1].update(rD))
-    );
-    if (fabs(axiscontrollers[0].update(TSP))+fabs(axiscontrollers[1].update(rD)) < 15) return true;
-    return false;
-  }
-};
+  //TSP: Target speed, rotationmode: velocity optimization on/off, PF: percentage of angle to move by, 100% = 100
+  bool update(double TSP, bool rotationmode, double PF){
+      double xGD = (xyaT[0]-xG); //global x distance
+      double yGD = (xyaT[1]-yG); //global y distance
+      double dist = sqrt(xGD*xGD+yGD*yGD);
+      double xD = 0;
+      double yD = 0;
+      double xCC = 0; //independent X axis PID
+      double yCC = 0; //independent Y axis PID
+      double rD = 0; //VERY janky figure out better solution than a hard multiplier and also stop using the same variable for both difference and output power
+      //we switch modes into a direct axis specific PID mode once we get close to prevent circular movement
+      //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
+      xCC = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
+      yCC = axiscontrollers[5].update(-yGD);
+      double TGang = atan2(yGD,xGD); //slope of current movement, should be done once per target point change but im lazy
+      //angle optimization to ensure we are always having our wheels face 45 degrees during the middle of movement
+      if (rotationmode) rD = determinesmallestA(
+          determinesmallestA(getrelrad(angleG,TGang),getrelrad(angleG,TGang+M_PI/2)),
+          determinesmallestA(getrelrad(angleG,TGang+M_PI),getrelrad(angleG,TGang+(3*M_PI)/4))
+      );
+      //Above: a potential optimization would be to get the average Tang of the new few segements and decide from that, to prevent cases of the bot pointlessly turning at the corner when that power could go to translating
+      else rD = getrelrad(angleG,xyaT[2])*determinesmallest((0.15*PF),1); //rotationmode is held in fixed segements of the movement path and released near the target to the real final angle
+      if (isnanf(xCC)) xCC = 0; //honestly screw nah I would expect stuff to be so cheese that it defaults to a 0
+      if (isnanf(yCC)) yCC = 0;
+      if(isnanf(rD)) rD = 0;
+      if (dist < 0.5){ //trigger x-y specific PID on activation
+        xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
+        yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
+        rD = axiscontrollers[1].update(-7.5*(rD));
+      }else{
+        xD = xCC*cos(getrelrad(angleG-M_PI/2,0))+yCC*cos(getrelrad(angleG,M_PI));
+        yD = yCC*sin(getrelrad(angleG,M_PI))+xCC*sin(getrelrad(angleG-M_PI/2,0));
+        rD = axiscontrollers[1].update(-20*(rD));
+      }
+      mBase->vectormove(xD,yD,rD,TSP);
+      //less than 2 inch distance to commit to next stage, angle only relevant if rotationmode disabled
+      switch(rotationmode){ //this is some janky ass logic but it should work
+        case 0: if (round(fabs(rD/(M_PI*2))*25) != 0) break; //if it is under angle threshold pass through to case 1
+        case 1: if (round(dist/4) == 0) return true; //case if angle optimization is enabled
+      }
+      return false;
+    }
+  };
 
-/*motionpath:
-    The goal of this is to implement movement paths through multiple points without
-    stopping
-
-    The current method of using a global trajectory array is kinda sketchy to use
-    if we are gonna end up using this approach, but it's probably doable.
-    The trajectory array is going to become an imaginary target though.
-
-    The code design for this will have 3 development stages
-      1. Converting PID speeds into percentage points for S curves, and making
-        the bot not stop after each curve by making the PID percentage be over
-        the entire trajectory
-          This will be done by either:
-            - Making xyaT into a bait coordinate, and getting axiscontrollers to
-            automatically convert to percentage inside coordcontroller by extending
-            xyaT percent units ahead in the ideal(line) direction (only good for 1.)
-            - Make low key motion profiling and then turn the axis controller from being
-            the primary source of movement into something used to maintain the profiling
-            speed targets
-      2. Adding a speed control when turning corners to minimize shaking from inertia(we might skip this)
-      3. Making a curved transision between point to basically eliminate shaking
-
-      Current implementation: step 1 done, low key motion profiling implementation
-*/
-struct motionpath{
+//Controller for motion segements
+struct segementcontroller{
   coordcontroller* controller;
-  double** points; //not sure about how to make a pointer for this 2d array case
+  motorf* Fmotors;
+  double (*config)[4];
   dualScurve* tcurve;
-  double percentage = 0;
-  double oldlen = 0;
-  int Tindex = 0;
+  double Tpercentage = 0; //% to completed compositebezier
+  double Lpercentage = 0; //% to full angle setting
+  bool rotmode = false; //true: enable angle optimization, false: disable angle optimization
+  motion* Cpath;
+  int size; //size
   bool isfullycomplete = false;
-  motionpath(coordcontroller b, double** loc){controller = &b; points = loc;
-    oldlen = sqrt(pow(xG-points[Tindex][0],2) + pow(xG-points[Tindex][1],2));
+  segementcontroller(coordcontroller b, motorf set[]){
+    controller = &b; Fmotors = set;
   }
   bool update(){
-    double TSP = points[Tindex][3];
-    double newlen = sqrt(pow(xG-points[Tindex][0],2) + pow(xG-points[Tindex][1],2));
-    percentage = ((newlen/oldlen)*100);
-    if (Tindex == sizeof(points)-1 && percentage >= 50) TSP = tcurve->getval(percentage);
-    if (Tindex == 0 && percentage <= 50) TSP = tcurve->getval(percentage);
-    if (controller->update(TSP)){
-      Tindex++;
-      if (Tindex == sizeof(points)) isfullycomplete = true;
-      oldlen = sqrt(pow(xG-points[Tindex][0],2) + pow(xG-points[Tindex][1],2));
-      return true;
+    if(!Cpath) return true; //passes if empty motion pointer
+    rotmode = (Tpercentage < Cpath->Disablethreshold-Cpath->Enablethreshold);
+    if (!rotmode){
+      if(Tpercentage < Cpath->Enablethreshold) Lpercentage = (Tpercentage/Cpath->Enablethreshold)*100;
+      else Lpercentage = ((Tpercentage-Cpath->Disablethreshold)/(100-Cpath->Disablethreshold))*100;
     }
-    return false;
+    bool leg = true; //1
+    if (Tpercentage == 100) controller->update(); //switch to standard auto stable upon hitting 100% movement
+    else {
+      leg = false;
+      if(controller->update(tcurve->getval(Tpercentage),rotmode,Lpercentage)) Tpercentage+=0.1; //10 segements per beziernp
+    }
+    Cpath->update(Tpercentage);
+    for(int i = 0; i < AXIS_COUNT; i++){
+      Fmotors[i].PID_MOVE_TARGET(Cpath->updvals[i]);
+      //^^note that motorF is loosely held at least until the final move.
+      //motorF targets are tied to the progress of the base b/c stopping the base is impractical
+      leg*=Fmotors[i].PID_MOVE_CYCLE(); //1*0 = 0(false), 1*1 = 1(true)
+    }
+    if (leg) return true; //Everything has hit the target
+    return false; //update cycles still nescessary to hit the targets
   }
-};
-
-/*motion:
-  This is here so we can make a single std::vector for both
-  vision sensor PID control, as well as bezier curve moves, and
-  whatever else we may come up with, all we gotta do is extend this to it,
-  and make it polymorphic */
-class motion{
-
+  //sets new compositebezier
+  void setNP(motion a){
+    Tpercentage = 0;
+    Lpercentage = 0;
+    size = a.length;
+    Cpath = &a;
+  }
 };

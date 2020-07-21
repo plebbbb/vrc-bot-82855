@@ -87,18 +87,18 @@ class beziernp{
 //to implement that, each bezier must be generated at runtime upon completion of the last bezier, using the
 //velocity and heading values as subsitutes for second point of the bezier.
 class compositebezier{
-  int size; //could be a pointer at the moment I think this is just wasting memory but at the same time a pointer might be bigger than an int
   std::vector<beziernp> genarr; //WARNING: appending to this thing can kill your pointers if it has to resize itself to fit in the appended element
 public:
+  int size; //could be a pointer at the moment I think this is just wasting memory but at the same time a pointer might be bigger than an int
   //This constructor is for hard set degree 4 composites
-  //data params: x, y, starting angle, ending angle
+  //data params: x, y, angle
   //use the length value(raw size() output), not max index for size
-  compositebezier(double data[][4], int len):size(len){
+  compositebezier(double** data, int len):size(len){
     for(int i = size-1; i > 0; i--){ //tbd change to an std::vector.insert if possible
       double params[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
         {data[i][0],data[i][1]},
         {cos(data[i][2]),sin(data[i][2])}, //Speed configuration will be dealt with externally in the speed controller
-        {-cos(data[i][3]),-sin(data[i][3])},  //so basically we will access params and multiply these values to do the speed transformation
+        {data[i+1][0]-cos(data[i+1][2]),data[i+1][1]-sin(data[i][2])},  //so basically we will access params and multiply these values to do the speed transformation
         {data[i+1][0],data[i+1][1]}
       };
       /*One of the galaxy brain things we do here is due to the way which std::vector deals with popping things out of its storage
@@ -113,12 +113,37 @@ public:
     }
   }
   //safe, no deletion mode. In retrospect this is probably sufficient. Each beziernp is like 8 bytes so we shouldn't see any issues given that we have like 40MB of usable memory
-  void getvalnd(double pos){
+  void updvalnd(double pos){
     short ind = floor(pos); //tbd delete for memory?
     genarr.at(size-1-ind).getvalF(pos-floor(pos));
   };
 };
 
+
+struct motion{
+  compositebezier a;
+  double** val;
+  //BELOW: SHOULD BE WHAT AXIS_COUNT IS
+  double updvals[0]; //this entire passing through of the motorF values is kinda stupid, also this should be whatever AXIS_COUNT is
+  double Enablethreshold;
+  double Disablethreshold;
+  double length; //this is raw length of all params, not max index
+  motion(double** e, int lth, double SV, double EV):a(e,lth){ //SV/EV: index at which to enable/disable angle optimization
+    val = e;
+    length = lth;
+    Enablethreshold=(SV/lth)*100;
+    Disablethreshold=(EV/lth)*100;
+  }
+  void update(double perc){
+    double va = (determinesmallest(perc/100,1))*length;
+    int vr = ceil(va)-1; //math.ceil(1.00) = 1
+    a.updvalnd(va);
+    xyaT[2] = val[vr][3]; //target angle confirmation
+    for(int i = 0; i < AXIS_COUNT; i++){
+      updvals[i] = val[vr][i+4]; //first 3 indexes are x, y, heading angle, real angle
+    }
+  }
+};
 /*PID: generic PID system*/
 //NOTE: DEFAULT TGT = 0
 struct PID{

@@ -21,12 +21,13 @@ double estspd = 0;
 double heading = angleG;
 double xyaT[3] = {0,0,angleG};
 double vscalefac = 0;
+const int AXIS_COUNT = 0;
 
 //********************************************************************************//
 //Pascal's Triangle for Bezier calculations so we can skip manual computation
 //this is the binomial factor thing
-//I dont think we would do more than deg 10 anyways so its only up to 10
-const std::vector<short> Ptriangle[] = { //short cuz we never go past even 100
+//I dont think we would do more than deg 10 anyways so its only up to 10 for now
+const std::vector<short> Ptriangle[] = { //short cuz we never go past even 200
   {1},
   {1,1},
   {1,2,1},
@@ -107,7 +108,7 @@ double PIDLvals[][2] = {
 
 //********************************************************************************//
 //S curve VARIABLES
-//Scurve possible Y range: 0-127, X range: 0-50
+//Scurve possible Y range: 0-100, X range: 0-50
 //Get your coefficients from desmos! https://www.desmos.com/calculator/aydhkipdkz
 //Index 0: max spd, Index 1: slope, Index 2: horizontal offset, Index 3: vertical offset
 //max spd should be always positive!
@@ -224,9 +225,15 @@ double determinesmallest(double a, double b){
   return a;
 }
 
+//determine smallest functions, absolute edition
+double determinesmallestA(double a, double b){
+  if (fabs(a) > fabs(b)) return b;
+  return a;
+}
+
 //jank copy array
- void arraycopy(double tgt[], double ref[]){
-  for (int i = 0; i < sizeof(ref)/sizeof(*ref); i++){
+ void arraycopy(double tgt[], double ref[], int size){
+  for (int i = 0; i < size; i++){
     tgt[i] = ref[i];
   }
 }

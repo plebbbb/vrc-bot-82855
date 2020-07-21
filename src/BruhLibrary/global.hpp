@@ -35,7 +35,8 @@ extern motorw xdrivemotors[];
 extern basecontroller base;
 extern coordcontroller mover;
 extern opcontrolcontroller useonlyinopcontrol;
+extern segementcontroller seg;
 //TBD: add all the other controllers
 
 //std::vector of processed position commands
-extern std::vector<motion> processedpaths;
+extern std::vector<motion> processedpaths; //TBD: Make using a vector actually accomplish something

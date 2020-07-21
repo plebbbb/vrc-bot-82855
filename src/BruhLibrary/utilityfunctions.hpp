@@ -30,11 +30,14 @@ extern double factorial(double n);
 //determinesmallest: determines smallest val, not absolute
 extern double determinesmallest(double a, double b);
 
+//determinesmallestA: determines smallest val, absolute
+extern double determinesmallestA(double a, double b);
+
 //debug feature for odometry
 extern void odometrycontrollerdebug();
 
 //copies an array, tgt is changed to ref, assume same size
-extern void arraycopy(double tgt[], double ref[]);
+extern void arraycopy(double tgt[], double ref[], int size);
 
 //checks array equlivancy, assumes same size
 extern bool isarrsame(double a[], double b[], int size);

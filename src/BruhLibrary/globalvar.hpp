@@ -6,13 +6,13 @@ using namespace pros;
 /*GLOBAL DEFINITIONS*/
 //in inches or rads
 
-#define Y_AXIS_TWHEEL_OFFSET 6.95 //offset from center line of the y axis tracking sheel
-#define X_AXIS_TWHEEL_OFFSET 11.9 //not being used currently. we'd need another horz wheel for that
+#define Y_AXIS_TWHEEL_OFFSET 6.95 //offset from center line of the y axis tracking wheel
+#define X_AXIS_TWHEEL_OFFSET 11.9 //offset from center lie of the x axis tracking wheel
 #define STD_WHEEL_RADIUS 1.625 //4in base wheels
 #define STD_TWHEEL_RADIUS 1.375 //2.75in wheel for left-right tracking wheels
 #define STD_BTWHEEL_RADIUS 2.00 //4in wheel used on back wheel for testing bot
 #define BASE_MOTOR_RPM 200 //base motor rpm
-
+//#define AXIS_COUNT 3; //different motor axises we must interact with, base direction/angle excluded
 
 //********************************************************************************//
 /*GLOBAL VARIABLES*/
@@ -70,3 +70,10 @@ extern bool configoptions[];
 
 //Pascal's triangle
 extern const std::vector<short> Ptriangle[];
+
+//amount of axises
+extern const int AXIS_COUNT;
+
+//base motor trajectories
+extern std::vector<std::vector<double[4]>> moveinst;
+//double[][axis count] is what it should be but we cant throw variables in there

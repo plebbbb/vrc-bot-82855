@@ -21,7 +21,7 @@ TO BE DONES:
     - Joystick axis - not to be done unless nescessary
   - Automated background operation based on sensor inputs
 */ //TBD - make troubleshooting tree for motor tuning, also make a damn interface for this already its so messy as is
-struct motorf{
+struct motorf{ //TO BE TESTED
   ADIEncoder* linkedencoder;
   Motor* mot; //this might make a mess, but its only pointed to once so it's ok
   double rotratio, tgt;
@@ -44,7 +44,7 @@ struct motorf{
   //Note: the current auton system avoids the usage of this system
   void PID_MOVE_TARGET(double tt){
     tgt = tt;
-    IntPID.set_tgt_clean(tt);
+    IntPID.set_tgt_soft(tt);
   }
   //PID_MOVE_CYCLE: One increment PID update system, returns movement completion
   bool PID_MOVE_CYCLE(){

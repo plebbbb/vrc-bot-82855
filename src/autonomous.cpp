@@ -16,10 +16,26 @@ system
 //********************************************************************************//
 /*auton procedures:
 procedure documentation:
+  x coord, y coord, heading angle, final orientation angle, motorF values...
+*/
+std::vector<std::vector<double[4]>> moveinst = {
+  //moveinst[0] - A test instance for solely base movement
+  {
+    {0,0,M_PI/2,M_PI/2},
+    {10,10,0,M_PI/2},
+    {20,20,M_PI/2,M_PI/2}
+  }
+};
+
+std::vector<motion> processedpaths = {
+  motion((double**)moveinst[0].data(),moveinst[0].size(),0,1)
+  //TBD: does moveinst[0].data work? and does the casting to double** work?
+};
+
+//postionsetTEST: Benchmark test to ensure the functionality of coordcontroller in direct line mode
+/*procedure documentation:
   x coord, y coord, angle target... TBA
 */
-
-//postionsetTEST: Benchmark test to ensure the functionality of the motors
 double positionsetTEST[][3] = {
   {0,0,M_PI/2},
   {30,15,M_PI},
@@ -36,6 +52,7 @@ void autonomous(){
   xyaT[1] = positionsetTEST[0][1];
   xyaT[2] = positionsetTEST[0][2];
   coordcontroller mover(base,bPID);
+  segementcontroller seg(mover,)
 //  odometrycontrollerdebug();
   while(true){
     odo.posupdv2();
