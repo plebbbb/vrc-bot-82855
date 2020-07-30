@@ -148,13 +148,19 @@ struct coordcontroller{
       xCC = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
       yCC = axiscontrollers[5].update(-yGD);
       double TGang = atan2(yGD,xGD); //slope of current movement, should be done once per target point change but im lazy
+      if (isnanf(TGang) && isinff(TGang)) TGang = xyaT[2]; //for the edge cases
       //angle optimization to ensure we are always having our wheels face 45 degrees during the middle of movement
-      if (rotationmode) rD = determinesmallestA(
+      if (rotationmode) rD = PF*determinesmallestA(
           determinesmallestA(getrelrad(angleG,TGang),getrelrad(angleG,TGang+M_PI/2)),
-          determinesmallestA(getrelrad(angleG,TGang+M_PI),getrelrad(angleG,TGang+(3*M_PI)/4))
+          determinesmallestA(getrelrad(angleG,TGang+M_PI),getrelrad(angleG,TGang+(3*M_PI/2)))
       );
       //Above: a potential optimization would be to get the average Tang of the new few segements and decide from that, to prevent cases of the bot pointlessly turning at the corner when that power could go to translating
-      else rD = getrelrad(angleG,xyaT[2])*determinesmallest((0.15*PF),1); //rotationmode is held in fixed segements of the movement path and released near the target to the real final angle
+      else rD = getrelrad(angleG,xyaT[2]); //rotationmode is held in fixed segements of the movement path and released near the target to the real final angle
+  /*    lcd::print(0,"Forward Angle Offset: %f", getrelrad(angleG,TGang));
+      lcd::print(1,"90deg CCW Angle Offset: %f", getrelrad(angleG,+M_PI/2));
+      lcd::print(2,"180deg Angle Offset: %f", getrelrad(angleG,TGang+M_PI));
+      lcd::print(3,"270deg CCW Angle Offset: %f", getrelrad(angleG,TGang+(3*M_PI/2)));
+      lcd::print(4,"Current Offset: %f", rD);*/
       if (isnanf(xCC)) xCC = 0; //honestly screw nah I would expect stuff to be so cheese that it defaults to a 0
       if (isnanf(yCC)) yCC = 0;
       if(isnanf(rD)) rD = 0;
@@ -181,13 +187,10 @@ struct coordcontroller{
 struct segementcontroller{
   coordcontroller* controller;
   motorf* Fmotors;
-  double (*config)[4];
-  dualScurve* tcurve;
   double Tpercentage = 0; //% to completed compositebezier
   double Lpercentage = 0; //% to full angle setting
   bool rotmode = false; //true: enable angle optimization, false: disable angle optimization
   motion* Cpath;
-  int size; //size
   bool isfullycomplete = false;
   segementcontroller(coordcontroller b, motorf set[]){
     controller = &b; Fmotors = set;
@@ -203,15 +206,15 @@ struct segementcontroller{
     if (Tpercentage == 100) controller->update(); //switch to standard auto stable upon hitting 100% movement
     else {
       leg = false;
-      if(controller->update(tcurve->getval(Tpercentage),rotmode,Lpercentage)) Tpercentage+=0.1; //10 segements per beziernp
+      if(controller->update(Cpath->DSC->getval(Tpercentage),rotmode,Lpercentage)) Tpercentage+=0.1; //10 segements per beziernp
     }
     Cpath->update(Tpercentage);
-    for(int i = 0; i < AXIS_COUNT; i++){
+/*    for(int i = 0; i < AXIS_COUNT; i++){
       Fmotors[i].PID_MOVE_TARGET(Cpath->updvals[i]);
       //^^note that motorF is loosely held at least until the final move.
       //motorF targets are tied to the progress of the base b/c stopping the base is impractical
       leg*=Fmotors[i].PID_MOVE_CYCLE(); //1*0 = 0(false), 1*1 = 1(true)
-    }
+    }*/
     if (leg) return true; //Everything has hit the target
     return false; //update cycles still nescessary to hit the targets
   }
@@ -219,7 +222,6 @@ struct segementcontroller{
   void setNP(motion a){
     Tpercentage = 0;
     Lpercentage = 0;
-    size = a.length;
     Cpath = &a;
   }
 };

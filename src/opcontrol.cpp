@@ -28,6 +28,12 @@ void opcontrol(){
   xyaT[0] = 20;
   xyaT[1] = 10;
   xyaT[2] = M_PI;
+  Motor b(9);
+/*  while(true){
+    //NBmotors[0].move();
+    b.move(ctrl.get_digital(DIGITAL_UP)*127);
+    delay(10);
+  }*/
 /*  while(true){
     odo.posupdv2();
     odometrycontrollerdebug();

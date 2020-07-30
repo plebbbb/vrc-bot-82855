@@ -164,7 +164,10 @@ bool configoptions[]{
 };
 */
 //********************************************************************************//
-//temporary BezierNP for testing's sake
+//motorf array
+motorf NBmotors[] = {
+  motorf(PIDKvals[0],PIDSvals[0],PIDLvals[0],9,DIGITAL_UP)
+};
 
 
 

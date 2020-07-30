@@ -23,23 +23,25 @@ TO BE DONES:
 */ //TBD - make troubleshooting tree for motor tuning, also make a damn interface for this already its so messy as is
 struct motorf{ //TO BE TESTED
   ADIEncoder* linkedencoder;
-  Motor* mot; //this might make a mess, but its only pointed to once so it's ok
+  Motor mot; //this might make a mess, but its only pointed to once so it's ok
   double rotratio, tgt;
   double curpos = 0;
   double constraints[2]; //index 0: upper constraint, index 1: lower constraint
   double* toggletargets; // an array of targets for the toggle to switch between
-  bool target = 0;
+  bool target = false;
   double uniquespeedscale;
   controller_digital_e_t* button;
-  bool toggleorhold = true; //false is toggle, hold is true
+  bool toggleorhold = false; //false is toggle, hold is true
   bool islinked = false;
   PID IntPID; //how do I full copy properly? the current method is bloaty
-  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, controller_digital_e_t but[]):IntPID(scalers, ms, limits)
-  {mot = &usedmotor; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
-  motorf(double scalers[], bool ms[], double limits[], double rr[], Motor usedmotor, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms, limits)
-  {mot = &usedmotor; linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true; rr[3] = uniquespeedscale;}
-  motorf(double scalers[], bool ms[], double limits[], dualScurve es, double rr[], Motor usedmotor, controller_digital_e_t but):IntPID(scalers, ms, limits, es)
-  {mot = &usedmotor; button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
+  motorf(double scalers[], bool ms[], double limits[], int motpin, controller_digital_e_t but):IntPID(scalers, ms, limits),mot(motpin)
+  { button = &but; toggleorhold = false;}
+  motorf(double scalers[], bool ms[], double limits[], double rr[], int motpin, controller_digital_e_t but[]):IntPID(scalers, ms, limits),mot(motpin)
+  { button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
+  motorf(double scalers[], bool ms[], double limits[], double rr[], int motpin, ADIEncoder LE, controller_digital_e_t but[]):IntPID(scalers, ms, limits),mot(motpin)
+  { linkedencoder = &LE; button = but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; islinked = true; rr[3] = uniquespeedscale;}
+  motorf(double scalers[], bool ms[], double limits[], dualScurve es, double rr[], int motpin, controller_digital_e_t but):IntPID(scalers, ms, limits, es),mot(motpin)
+  { button = &but; constraints[0] = rr[0]; constraints[1] = rr[1]; rotratio = rr[2]; rr[3] = uniquespeedscale;}
   //PID_MOVE_TARGET: sets PID target
   //Note: the current auton system avoids the usage of this system
   void PID_MOVE_TARGET(double tt){
@@ -49,7 +51,7 @@ struct motorf{ //TO BE TESTED
   //PID_MOVE_CYCLE: One increment PID update system, returns movement completion
   bool PID_MOVE_CYCLE(){
     updateangle();
-    mot->move(IntPID.update(curpos));
+    mot.move(IntPID.update(curpos));
     if (fabs(tgt-curpos) < 2) return true;
     return false;
   }
@@ -59,9 +61,9 @@ struct motorf{ //TO BE TESTED
     PID_MOVE_TARGET(curpos);
     if (toggleorhold){
       if (ctrl.get_digital(button[1]) && !ctrl.get_digital(button[1]) && curpos < constraints[0])
-        {mot->move(uniquespeedscale*speedmultiplier*127); return;}
+        {mot.move(uniquespeedscale*speedmultiplier*127); return;}
       if (!ctrl.get_digital(button[1]) && ctrl.get_digital(button[1]) && curpos > constraints[1])
-        {mot->move(uniquespeedscale*-speedmultiplier*127); return;}
+        {mot.move(uniquespeedscale*-speedmultiplier*127); return;}
       PID_MOVE_CYCLE();
       return;
     }else{
@@ -77,7 +79,7 @@ struct motorf{ //TO BE TESTED
   }
   void updateangle(){
     if (islinked) curpos = rotratio*linkedencoder->get_value();
-    else curpos = rotratio*mot->get_position();
+    else curpos = rotratio*mot.get_position();
   }
   void keyangle(){
     curpos = 0;

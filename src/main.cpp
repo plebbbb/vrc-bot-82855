@@ -10,6 +10,8 @@ void initialize() {
   curvesets[0].b = &curves[1];
   bPID[0].Scurve = &curvesets[0];
   //coordcontroller mover(base,bPID,xyaT);
+  processedpaths.push_back(motion(moveinst[0].data(),3,0,1,curvesets[0]));
+  printf("Test: %d",Ptriangle[3][2]);
   delay(100);
   //autonselection(); //calls auton selection method
 }

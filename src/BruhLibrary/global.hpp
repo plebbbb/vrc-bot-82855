@@ -32,6 +32,7 @@ extern PID bPID[];
 extern odometrycontroller odo;
 extern motorw kiwimotors[];
 extern motorw xdrivemotors[];
+extern motorf NBmotors[];
 extern basecontroller base;
 extern coordcontroller mover;
 extern opcontrolcontroller useonlyinopcontrol;

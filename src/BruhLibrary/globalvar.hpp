@@ -75,5 +75,5 @@ extern const std::vector<short> Ptriangle[];
 extern const int AXIS_COUNT;
 
 //base motor trajectories
-extern std::vector<std::vector<double[4]>> moveinst;
+extern std::vector<std::vector<double>> moveinst[];
 //double[][axis count] is what it should be but we cant throw variables in there

@@ -33,14 +33,14 @@ struct dualScurve{
     double pos = fabs(ps);
   //  lcd::print(1,"given value: %f", pos);
     if (pos < 50) {
-      lcd::print(2,"return value: %f", a->getval(pos));
+      //lcd::print(2,"return value: %f", a->getval(pos));
       return a->getval(pos);
     }
     else if (!b) {
-      lcd::print(2,"return value: %f", a->getval(100-pos));
+    //___int_least64_t_defined  lcd::print(2,"return value: %f", a->getval(100-pos));
       return a->getval(100-pos);
     }
-    lcd::print(2,"return value: %f", b->getval(100-pos));
+  //  lcd::print(2,"return value: %f", b->getval(100-pos));
     return b->getval(100-pos);
     //for the part past 50%, we flip the curveS, so that we only need one curve from 0-50 for each different profile
   };
@@ -51,7 +51,7 @@ struct dualScurve{
   as many transformations as we want but only 2 garanteed target locations
   */
 
-class beziernp{
+struct beziernp{
     double (*coords)[2];
     int size; //coordinate size
     //params: Coordinates of NP bezier, amount of coordinates(not an index)
@@ -59,6 +59,11 @@ class beziernp{
   public:
     beziernp(double points[][2], int sie):size(sie){
   	  coords = points; //fancy speed and heading configurations precomputed in compositebezier to reduce load
+      for(int i = 0; i <size; i++){
+        for (int o = 0; o < 2; o++){
+          printf("\nCoords (%d,%d) : %f",i,o,coords[i][o]);
+        }
+      }
     }
     //variation two, probably higher chance of working than the other option, but probably
     //a lot more taxing, we may actually hit performance issues from this once
@@ -76,7 +81,7 @@ class beziernp{
     //formatting: t is iteration position, k is index, v is coordinate
     //TBD: precompute these as well, we just gotta set a fixed point resolution limit then throw this in eclipse or something,
     //and have it print out a bunch of datasets which we paste in. We probably have enough memory
-  private:
+  //private:
     double getCCF(double t, double k){
       return (Ptriangle[size-1][k])*pow((1-t),size-1-k)*pow(t,k); //to save performance we calc this once per coord
     }
@@ -94,43 +99,68 @@ public:
   //data params: x, y, angle
   //use the length value(raw size() output), not max index for size
   compositebezier(double** data, int len):size(len){
-    for(int i = size-1; i > 0; i--){ //tbd change to an std::vector.insert if possible
-      double params[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
+    for(int i = 0; i < size-1; i++){ //tbd change to an std::vector.insert if possible
+      double (*params)[2] = new double[4][2];
+      double pr[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
         {data[i][0],data[i][1]},
         {cos(data[i][2]),sin(data[i][2])}, //Speed configuration will be dealt with externally in the speed controller
-        {data[i+1][0]-cos(data[i+1][2]),data[i+1][1]-sin(data[i][2])},  //so basically we will access params and multiply these values to do the speed transformation
+        {data[i+1][0]-cos(data[i+1][2]),data[i+1][1]-sin(data[i+1][2])},  //so basically we will access params and multiply these values to do the speed transformation
         {data[i+1][0],data[i+1][1]}
       };
-      /*One of the galaxy brain things we do here is due to the way which std::vector deals with popping things out of its storage
-      when one deletes something, everything behind it must get shifted down, so if index 1 is gone, index 2 is the new index 1
-      in the case when this happens, std::vector moves the memory addresses of those shifted indexes, which screws up our pointers,
-      potentially making active speed and trajectory transformations impossible. By appending from the last point first in the for loop
-      what we manage to do is to shift nothing when we delete parts of the path we've already taken. This lets us have the option to save
-      some memory by deleting completed parts of the path compared to the alternate approach of listing down which bezier we are on
-      */
-      //in addition it also boosts performance if we choose to delete over alternative options cuz memory transfering can get tetious
-      genarr.push_back(beziernp(params,4));
+      for (int x = 0; x < 4; x++){
+        for (int y = 0; y < 2; y++){
+          params[x][y] = pr[x][y];
+          //printf("PARAMS: %d, %d : %f",x,y,params[x][y]);
+        }
+      }
+      genarr.push_back(*(new beziernp(params,4)));
+    }
+  }
+
+  //if intaking a std::vector
+  compositebezier(std::vector<double> data[], int len):size(len){
+    for(int i = 0; i < size-1; i++){ //tbd change to an std::vector.insert if possible
+      double (*params)[2] = new double[4][2];
+      double pr[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
+        {data[i][0],data[i][1]},
+        {cos(data[i][2]),sin(data[i][2])}, //Speed configuration will be dealt with externally in the speed controller
+        {data[i+1][0]-cos(data[i+1][2]),data[i+1][1]-sin(data[i+1][2])},  //so basically we will access params and multiply these values to do the speed transformation
+        {data[i+1][0],data[i+1][1]}
+      };
+      for (int x = 0; x < 4; x++){
+        for (int y = 0; y < 2; y++){
+          params[x][y] = pr[x][y];
+          //printf("PARAMS: %d, %d : %f",x,y,params[x][y]);
+        }
+      }
+      genarr.push_back(*(new beziernp(params,4)));
     }
   }
   //safe, no deletion mode. In retrospect this is probably sufficient. Each beziernp is like 8 bytes so we shouldn't see any issues given that we have like 40MB of usable memory
   void updvalnd(double pos){
     short ind = floor(pos); //tbd delete for memory?
-    genarr.at(size-1-ind).getvalF(pos-floor(pos));
+    genarr[ind].getvalF(pos);
   };
 };
 
 
 struct motion{
   compositebezier a;
-  double** val;
+  std::vector<double>* val;
   //BELOW: SHOULD BE WHAT AXIS_COUNT IS
   double updvals[0]; //this entire passing through of the motorF values is kinda stupid, also this should be whatever AXIS_COUNT is
   double Enablethreshold;
   double Disablethreshold;
+  dualScurve* DSC;
   double length; //this is raw length of all params, not max index
-  motion(double** e, int lth, double SV, double EV):a(e,lth){ //SV/EV: index at which to enable/disable angle optimization
+  motion(std::vector<double> e[], int lth, double SV, double EV, dualScurve sc):a(e,lth){ //SV/EV: index at which to enable/disable angle optimization
     val = e;
+    DSC = &sc;
+    //a = new compositebezier(val,lth);
     length = lth;
+    for(int i = 0; i < lth; i++){
+      printf("\nVal: %f",e[0][i]);
+    }
     Enablethreshold=(SV/lth)*100;
     Disablethreshold=(EV/lth)*100;
   }
@@ -140,7 +170,7 @@ struct motion{
     a.updvalnd(va);
     xyaT[2] = val[vr][3]; //target angle confirmation
     for(int i = 0; i < AXIS_COUNT; i++){
-      updvals[i] = val[vr][i+4]; //first 3 indexes are x, y, heading angle, real angle
+      updvals[i] = val[vr][i+4]; //first 3 indexes are x, y, heading angle, real angle and so are ignored
     }
   }
 };

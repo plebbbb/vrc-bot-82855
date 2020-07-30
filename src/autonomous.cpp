@@ -18,7 +18,7 @@ system
 procedure documentation:
   x coord, y coord, heading angle, final orientation angle, motorF values...
 */
-std::vector<std::vector<double[4]>> moveinst = {
+std::vector<std::vector<double>> moveinst[] = {
   //moveinst[0] - A test instance for solely base movement
   {
     {0,0,M_PI/2,M_PI/2},
@@ -28,7 +28,8 @@ std::vector<std::vector<double[4]>> moveinst = {
 };
 
 std::vector<motion> processedpaths = {
-  motion((double**)moveinst[0].data(),moveinst[0].size(),0,1)
+  //motion(moveinst[0].data(),moveinst[0].data()->size(),0,1,curvesets[0])
+  //motion(moveinst[0].data(),3,0,1,curvesets[0])
   //TBD: does moveinst[0].data work? and does the casting to double** work?
 };
 
@@ -52,31 +53,33 @@ void autonomous(){
   xyaT[1] = positionsetTEST[0][1];
   xyaT[2] = positionsetTEST[0][2];
   coordcontroller mover(base,bPID);
-  segementcontroller seg(mover,)
+  //segementcontroller seg(mover,NBmotors);
 //  odometrycontrollerdebug();
+//processedpaths[0].DSC = &curvesets[0];
+//seg.setNP(processedpaths[cycle]);
+int cyc = 0;
   while(true){
     odo.posupdv2();
+    if(mover.update(20, true, 2) && cyc < 5){
+      cyc++;
+      xyaT[0] = positionsetTEST[cyc][0];
+      xyaT[1] = positionsetTEST[cyc][1];
+      xyaT[2] = positionsetTEST[cyc][2];
+    }
+    //printf("test1");
+    /*for(int i = 0; i < 4; i++){
+      printf("\nVal: %f",seg.Cpath->val[0][i]);
+    }
+    printf("test2");*/
     //the idea for this if statement is that it calls all updates
     //and only passes once everything is done, before updating the variables
-    //odometrycontrollerdebug();
-    if (mover.update()/* && (motorf object).PID_UPDATE_CYCLE ....*/ && cycle < sizeof(positionsetTEST)/sizeof(*positionsetTEST)-1){
-      /*TBD: Make the movement array into a 3d array,
-        have the third dimension be for each different auton
-        and the */
-      //is the for loop cheese? theres the something:something way but
-      //idk how that works, nor if its even in C++
-      cycle = cycle+1;
-      xyaT[0] = positionsetTEST[cycle][0];
-      xyaT[1] = positionsetTEST[cycle][1];
-      xyaT[2] = positionsetTEST[cycle][2];
-      /*while the goal was to not use functions, chances are we are gonna
-      have to for motorf because I really dont wanna rewrite those constructors*/
-      //suggested code for doing so//
-      /*
-      (motorf object).PID_MOVE_TARGET(positionsetTEST[cycle][specific index]);
-      */
+  /*  if (seg.update() && cycle < processedpaths.size()-1){
+      cycle++;
+      seg.setNP(processedpaths[cycle]);
     }
-    lcd::print(7,"Cycle: %d", cycle);
+    lcd::print(0,"VAL: %f",seg.Tpercentage);
+    lcd::print(1,"Xt: %d, Yt: %d, Rt, %d",(int)xyaT[0],(int)xyaT[1],(int)xyaT[2]);
+    lcd::print(7,"Cycle: %d", cycle);*/
     delay(10);
   }
 }
