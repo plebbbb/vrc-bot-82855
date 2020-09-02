@@ -1,1 +1,57 @@
-<mxfile host="app.diagrams.net" modified="2020-09-02T03:47:40.632Z" agent="5.0 (Windows)" version="13.6.6" etag="E0Mxg5VQWl6zssXXgfPC" type="github"><diagram id="8H9E2ptjqNLhqbZR2ry7">UzV2zq1wL0osyPDNT0nNUTV2VTV2LsrPL4GwciucU3NyVI0MMlNUjV1UjYwMgFjVyA2HrCFY1qAgsSg1rwSLBiADYTaQg2Y1AA==</diagram></mxfile>
+<mxfile host="app.diagrams.net" modified="2020-09-02T03:59:06.994Z" agent="5.0 (Windows)" etag="DH8qXEzC3IOgH2qyzV8t" version="13.6.6" type="github">
+  <diagram id="8H9E2ptjqNLhqbZR2ry7" name="Page-1">
+    <mxGraphModel dx="1422" dy="791" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="oS58zShL6NZHC2Msg9gu-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="oS58zShL6NZHC2Msg9gu-1" target="oS58zShL6NZHC2Msg9gu-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="440" y="180" />
+              <mxPoint x="260" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-14" value="&lt;div&gt;Constant Percentage iteration through points&lt;br&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="oS58zShL6NZHC2Msg9gu-13">
+          <mxGeometry x="-0.1122" y="3" relative="1" as="geometry">
+            <mxPoint x="-27" y="-3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-1" value="&lt;div&gt;Motion Object&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="110" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-2" value="&lt;font style=&quot;font-size: 18px&quot;&gt;Flowchart for Autonomous Control Commands&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="250" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-9" value="&lt;div&gt;Sequential Indexes in percent&lt;br&gt;&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="oS58zShL6NZHC2Msg9gu-4" target="oS58zShL6NZHC2Msg9gu-10">
+          <mxGeometry x="0.5263" y="-15" relative="1" as="geometry">
+            <mxPoint x="170" y="320" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="230" y="260" />
+              <mxPoint x="230" y="295" />
+              <mxPoint x="140" y="295" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-21" value="Percentage based&lt;br&gt;speed determination" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="oS58zShL6NZHC2Msg9gu-4" target="oS58zShL6NZHC2Msg9gu-19">
+          <mxGeometry x="0.1875" y="15" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-4" value="&lt;div&gt;Compositebezier&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="230" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-10" value="BezierNP Array" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="330" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-19" value="&lt;div&gt;DualSCurve&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="290" y="330" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="oS58zShL6NZHC2Msg9gu-23" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="530" y="250" width="120" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
