@@ -51,97 +51,74 @@ struct dualScurve{
   as many transformations as we want but only 2 garanteed target locations
   */
 
-struct beziernp{
-    double (*coords)[2];
-    int size; //coordinate size
-    //params: Coordinates of NP bezier, amount of coordinates(not an index)
-    //and yes, I actually need the size thing cuz pointers dont pass along the actual size
-  public:
-    beziernp(double points[][2], int sie):size(sie){
-  	  coords = points; //fancy speed and heading configurations precomputed in compositebezier to reduce load
-      for(int i = 0; i <size; i++){
-        for (int o = 0; o < 2; o++){
-          printf("\nCoords (%d,%d) : %f",i,o,coords[i][o]);
+  struct beziernp{
+      double (*coords)[2];
+      int size; //coordinate size
+      //params: Coordinates of NP bezier, amount of coordinates(not an index)
+      //and yes, I actually need the size thing cuz pointers dont pass along the actual size
+    public:
+      beziernp(double points[][2], int sie):size(sie){
+    	  coords = points; //fancy speed and heading configurations precomputed in motion to reduce load
+        for(int i = 0; i <size; i++){
+          for (int o = 0; o < 2; o++){
+          //  printf("\nCoords (%d,%d) : %f",i,o,coords[i][o]);
+          }
         }
-      }
-    }
-    //variation two, probably higher chance of working than the other option, but probably
-    //a lot more taxing, we may actually hit performance issues from this once
-    //https://www.desmos.com/calculator/xlpbe9bgll
-    void getvalF(double t){
-      double x = 0; double y = 0;
-      for (int i = 0; i < size; i++){
-        double ccfactor = getCCF(t,i);
-        x+=ccfactor*coords[i][0];
-        y+=ccfactor*coords[i][1];
-      }
-      xyaT[0] = x;
-      xyaT[1] = y;
-    }
-    //formatting: t is iteration position, k is index, v is coordinate
-    //TBD: precompute these as well, we just gotta set a fixed point resolution limit then throw this in eclipse or something,
-    //and have it print out a bunch of datasets which we paste in. We probably have enough memory
-  //private:
-    double getCCF(double t, double k){
-      return (Ptriangle[size-1][k])*pow((1-t),size-1-k)*pow(t,k); //to save performance we calc this once per coord
-    }
-};
-
-//composite N-point bezier curve, currently set up to only go to degree 4. Custom points dataset to be implemented
-//for the moment, active speed and trajectory controls are going to be possible by code design, but we will use precalculated values for now until odometrycontroller's estimations are fixed
-//to implement that, each bezier must be generated at runtime upon completion of the last bezier, using the
-//velocity and heading values as subsitutes for second point of the bezier.
-class compositebezier{
-  std::vector<beziernp> genarr; //WARNING: appending to this thing can kill your pointers if it has to resize itself to fit in the appended element
-public:
-  int size; //could be a pointer at the moment I think this is just wasting memory but at the same time a pointer might be bigger than an int
-  //This constructor is for hard set degree 4 composites
-  //data params: x, y, angle
-  //use the length value(raw size() output), not max index for size
-  compositebezier(double** data, int len):size(len){
-    for(int i = 0; i < size-1; i++){ //tbd change to an std::vector.insert if possible
-      double (*params)[2] = new double[4][2];
-      double pr[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
-        {data[i][0],data[i][1]},
-        {cos(data[i][2]),sin(data[i][2])}, //Speed configuration will be dealt with externally in the speed controller
-        {data[i+1][0]-cos(data[i+1][2]),data[i+1][1]-sin(data[i+1][2])},  //so basically we will access params and multiply these values to do the speed transformation
-        {data[i+1][0],data[i+1][1]}
       };
-      for (int x = 0; x < 4; x++){
-        for (int y = 0; y < 2; y++){
-          params[x][y] = pr[x][y];
-          //printf("PARAMS: %d, %d : %f",x,y,params[x][y]);
+      //https://www.desmos.com/calculator/xlpbe9bgll
+      void getvalF(double t){
+        double x = 0; double y = 0;
+        for (int i = 0; i < size; i++){
+          double ccfactor = getCCF(t,i);
+          x+=ccfactor*coords[i][0];
+          y+=ccfactor*coords[i][1];
         }
-      }
-      genarr.push_back(*(new beziernp(params,4)));
-    }
-  }
-
-  //if intaking a std::vector
-  compositebezier(std::vector<double> data[], int len):size(len){
-    for(int i = 0; i < size-1; i++){ //tbd change to an std::vector.insert if possible
-      double (*params)[2] = new double[4][2];
-      double pr[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
-        {data[i][0],data[i][1]},
-        {cos(data[i][2]),sin(data[i][2])}, //Speed configuration will be dealt with externally in the speed controller
-        {data[i+1][0]-cos(data[i+1][2]),data[i+1][1]-sin(data[i+1][2])},  //so basically we will access params and multiply these values to do the speed transformation
-        {data[i+1][0],data[i+1][1]}
+        xyaT[0] = x;
+        xyaT[1] = y;
       };
-      for (int x = 0; x < 4; x++){
-        for (int y = 0; y < 2; y++){
-          params[x][y] = pr[x][y];
-          //printf("PARAMS: %d, %d : %f",x,y,params[x][y]);
-        }
-      }
-      genarr.push_back(*(new beziernp(params,4)));
-    }
-  }
-  //safe, no deletion mode. In retrospect this is probably sufficient. Each beziernp is like 8 bytes so we shouldn't see any issues given that we have like 40MB of usable memory
-  void updvalnd(double pos){
-    short ind = floor(pos); //tbd delete for memory?
-    genarr[ind].getvalF(pos);
+      //formatting: t is iteration position, k is index, v is coordinate
+      //Ptriangle is a set of precalculated binomial factors, up to degree 10
+      double getCCF(double t, double k){
+        return (Ptriangle[size-1][k])*pow((1-t),size-1-k)*pow(t,k); //to save performance we calc this once per coord
+      };
   };
-};
+
+  //composite N-point bezier curve, currently set up to only go to degree 4. Custom points dataset to be implemented
+  //for the moment, active speed and trajectory controls are going to be possible by code design, but we will use precalculated values for now until odometrycontroller's estimations are fixed
+  //to implement that, each bezier must be generated at runtime upon completion of the last bezier, using the
+  //velocity and heading values as subsitutes for second point of the bezier.
+  struct compositebezier{
+    std::vector<beziernp> genarr; //WARNING: appending to this thing can kill your pointers
+    //This constructor is for hard set degree 4 composites
+    //data params: x, y, angle, angle scale factor
+    //use the length value(raw size() output), not max index for size
+    //if intaking a std::vector
+    compositebezier(std::vector<double> data[], int len){
+  //	printf("TEST01\n");
+      for(int i = 0; i < len-1; i++){ //tbd change to an std::vector.insert if possible
+        double (*params)[2] = new double[4][2];
+        double pr[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
+          {data[i][0],data[i][1]},
+          {data[i][3]*cos(data[i][2])+data[i][0],data[i][3]*sin(data[i][2])+data[i][1]}, //Speed configuration will be dealt with externally in the speed controller
+          {data[i+1][0]-data[i+1][3]*cos(data[i+1][2]),data[i+1][1]-data[i+1][3]*sin(data[i+1][2])},  //so basically we will access params and multiply these values to do the speed transformation
+          {data[i+1][0],data[i+1][1]}
+        };
+        for (int x = 0; x < 4; x++){
+          for (int y = 0; y < 2; y++){
+            params[x][y] = pr[x][y];
+            printf("PARAMS: %d, %d : %f\n",x,y,params[x][y]);
+          }
+        }
+        genarr.push_back(*(new beziernp(params,4)));
+      }
+    };
+    //safe, no deletion mode. In retrospect this is probably sufficient. Each beziernp is like 8 bytes so we shouldn't see any issues given that we have like 40MB of usable memory
+    //percent input from 0-100, not 0.00-1.00
+    void updvalnd(double pct){
+  	  double ival = (pct/100)*genarr.size();
+  	  genarr[(int)floor(ival)].getvalF(ival-floor(ival));
+    };
+  };
 
 
 struct motion{
@@ -158,20 +135,19 @@ struct motion{
     DSC = &sc;
     //a = new compositebezier(val,lth);
     length = lth;
-    for(int i = 0; i < lth; i++){
-      printf("\nVal: %f",e[0][i]);
-    }
-    Enablethreshold=(SV/lth)*100;
-    Disablethreshold=(EV/lth)*100;
+    Enablethreshold=(SV/lth)*100; //percent to enable angle optimization
+    Disablethreshold=(EV/lth)*100; //percent to disable angle optimization
   }
   void update(double perc){
-    double va = (determinesmallest(perc/100,1))*length;
-    int vr = ceil(va)-1; //math.ceil(1.00) = 1
+    double va = (determinesmallest(perc/100,1)); //scales percentage to correct values
+    int vr = ceil(va*length)-1; //arr index
+    //math.ceil(1.00) = 1, this prevents an array index error we get at 100% if we went with floor instead,
+    //where math.floor(1.00) = 1, while it should be 0, potentially exceeding the array
     a.updvalnd(va);
     xyaT[2] = val[vr][3]; //target angle confirmation
-    for(int i = 0; i < AXIS_COUNT; i++){
+  /*  for(int i = 0; i < AXIS_COUNT; i++){ //motorF update scheme, method to be revised
       updvals[i] = val[vr][i+4]; //first 3 indexes are x, y, heading angle, real angle and so are ignored
-    }
+    }*/
   }
 };
 /*PID: generic PID system*/
@@ -179,8 +155,8 @@ struct motion{
 struct PID{
 //private:
   /*Integral mode configurations:
-  false: Direct I scaling - 100% of I is added each cycle
-  true: Asymptope I - I approaches the max*/
+  false: Direct I scaling - 100% of I is added each cycle until the I limit. Confirmed working
+  true: Asymptope I - I approaches I limit with each iteration. To be tested*/
   bool Imode = 0;
 
   /*Proportional mode configurations

@@ -36,7 +36,7 @@ extern motorf NBmotors[];
 extern basecontroller base;
 extern coordcontroller mover;
 extern opcontrolcontroller useonlyinopcontrol;
-extern segementcontroller seg;
+//extern segementcontroller seg;
 //TBD: add all the other controllers
 
 //std::vector of processed position commands

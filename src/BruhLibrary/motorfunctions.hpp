@@ -20,7 +20,7 @@ TO BE DONES:
     - Double button hold - functioning
     - Joystick axis - not to be done unless nescessary
   - Automated background operation based on sensor inputs
-*/ //TBD - make troubleshooting tree for motor tuning, also make a damn interface for this already its so messy as is
+*/ //TBD - make troubleshooting tree for motor tuning
 struct motorf{ //TO BE TESTED
   ADIEncoder* linkedencoder;
   Motor mot; //this might make a mess, but its only pointed to once so it's ok
@@ -108,9 +108,9 @@ struct motorw{
   - Rotational control with PID stabilization
 */
 //also its actually stupid efficient, at least the vector calculation parts. The if statements, idk.
-//we dont even call a single cos or sin function, and only do multiplication and adding, so its super fast
-//we make an assumption that there is always a motor which perfectly counters any unwanted forces tho, which works but also
-//means that we will end up relying a lot on heading PIDs for auton, alongside manual control not mapping perfectly to the joystick
+//we dont even call a single cos or sin function, and only do multiplication and adding, so its super fast compared to the other approaches people have been showing
+//we make an assumption that there is always a motor which perfectly counters any unwanted forces tho, which works for the most part but also
+//means that we will end up relying a lot on heading PIDs for auton as our base isn't actually perfectly symmetrical
 struct basecontroller{
   motorw* MAP; //sketchy pointer that points to the motorw array so we can use it later
   //double vals[4];
@@ -150,7 +150,7 @@ struct basecontroller{
       ssc = &b; controls = css; ; rot = &ro; configuration = config; tang = angleG;}
     //tbd - deal with interia issues from rotation at high speeds, PID insta targets what happens when analog stick is 0
     void move(){
-      double rs = -ctrl.get_analog(controls[2]);
+      double rs = -deadzonecompute(ctrl.get_analog(controls[2]));
       if (configuration[1]) rs = rotationcompute();
       if (configuration[0]) relativemove(rs);
       else absolutemove(rs);
@@ -165,8 +165,8 @@ struct basecontroller{
      );
     }
     double rotationcompute(){
-      if (ctrl.get_analog(controls[2])){tang = angleG; return -ctrl.get_analog(controls[2]);}
-      return rot->update(getrelrad(tang, angleG));
+      if (deadzonecompute(ctrl.get_analog(controls[2]))){tang = angleG; return -deadzonecompute(ctrl.get_analog(controls[2]));} //max rot output
+      return rot->update(getrelrad(tang, angleG)); //PID stabilization to hold last input orientaiton
     }
     void relativemove(double rotation){
       ssc->vectormove(
@@ -188,4 +188,64 @@ struct basecontroller{
     //  lcd::print(6,"local x axis: %f", (ctrl.get_analog(controls[0])*cos(getrelrad(angleG-M_PI/2,0))+ctrl.get_analog(controls[1])*cos(getrelrad(angleG,M_PI))));
     //  lcd::print(7,"local y axis: %f", (ctrl.get_analog(controls[1])*sin(getrelrad(angleG,M_PI))+ctrl.get_analog(controls[0])*sin(getrelrad(angleG-M_PI/2,0))));
     }
+    double deadzonecompute(double in){
+      if (in > 10) return in;
+      return 0;
+    }
   };
+
+struct MotorSys{
+  double OPT; //filler variable to output sensor results
+  Motor* set;
+  bool iscomplete = false;
+  int c = 0; int t = 0; //c: counter for sensor triggers. Used to dictate how many balls must transfer before shutdown, t: threshold before flagging iscomplete for other
+  MotorSys(Motor e[]){
+    set = e;
+  }
+  void update();
+  void NC(int count, int TT){
+    c = count;
+    t = TT;
+    iscomplete = false;
+  }
+  void NR(){ //hard reset when toggle threshold exceeded in motorsysinterface
+    c = 0;
+    t = 0;
+    iscomplete = false;
+  }
+};
+
+//note: it's likely that we will have to add a motor shutdown delay
+struct Intakes: public MotorSys{
+  bool PT = false; //change to true if we have preload in the intake;
+  ADIAnalogIn g;
+  Intakes(Motor e[], int p):MotorSys(e),g(p){};
+  void update(){
+    if (c) {set[0].move_velocity(127);set[1].move_velocity(127);} else {set[0].move_velocity(0);set[1].move_velocity(0);}
+    if (g.get_value() > U_TGT_THRESHOLD && !PT) {c--; PT = true;} //currently the sensor is set up as a potentiometer, we may end up using something else tho
+    if (g.get_value() < U_TGT_THRESHOLD && PT) PT = false;
+    if (c == t) iscomplete = true;
+    OPT = g.get_value();
+  }
+};
+
+//note: there is a planned linking feature so that we can have MotorSysinterfaces sequentially activate: e.g intakes detect a ball which enables the other motors
+//however, such a feature is kinda painful to do and the edge cases which it tackles are rare enough that we can probably cheese through those situations
+struct MotorSysInterface{
+  MotorSys* sys;
+  bool CMPL = false; //completion param which is detached from
+  bool P = false; //previously triggered check
+  double PA; //activation percentage
+  double PD; //deactication percentage
+  int Cin; //Count param
+  int Tval; //Completion flag control, for the MotorSys
+  int TvalL; //Completion flag tied locally to CMPL
+  MotorSysInterface(MotorSys A, int count, int toggleval, int AVP, int DVP, int CPT){ //case with synched CMPL and MotorSys completion, this can be desynced if need be
+    Cin = count; Tval = toggleval; PA = AVP; PD = DVP; sys = &A; TvalL = Tval;
+  }
+  bool update(double perc){
+    if (!P && PA < perc && PD > perc) {P = true; sys->NC(Cin,Tval);}
+    if (sys->c == TvalL) CMPL = true;
+    return CMPL;
+  }
+};

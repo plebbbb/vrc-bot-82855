@@ -22,13 +22,21 @@ bool configoptions[]{
 //*******************************************************************************//
 //The actual code
 void opcontrol(){
-  angleG = M_PI/2;
   coordcontroller mover(base,bPID); //TEMP FOR AUTON TESTING
   opcontrolcontroller useonlyinopcontrol(base,controlscheme,bPID[2],configoptions);
-  xyaT[0] = 20;
-  xyaT[1] = 10;
-  xyaT[2] = M_PI;
-  Motor b(9);
+  //xyaT[0] = 20;
+//  xyaT[1] = 10;
+//  xyaT[2] = M_PI;
+  //Motor b(9);
+  //below: testing environment for motorsys, motorsysinterface, and intakes
+  Motor g[] = {Motor(9), Motor(10,true)};
+  MotorSys gg[] = {Intakes(g,2)};
+  while(true){
+    gg[0].NC(1,0);
+    delay(10);
+    if(gg[0].iscomplete) lcd::print(1,"NC WORKS");
+    lcd::print(2,"Pot Value: %f", gg[0].OPT);
+  }
 /*  while(true){
     //NBmotors[0].move();
     b.move(ctrl.get_digital(DIGITAL_UP)*127);
@@ -51,5 +59,5 @@ void opcontrol(){
     odometrycontrollerdebug();
     delay(10);
   }*/
-  autonomous();
+//  autonomous();
 }

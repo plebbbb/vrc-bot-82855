@@ -12,6 +12,7 @@ using namespace pros;
 #define STD_TWHEEL_RADIUS 1.375 //2.75in wheel for left-right tracking wheels
 #define STD_BTWHEEL_RADIUS 2.00 //4in wheel used on back wheel for testing bot
 #define BASE_MOTOR_RPM 200 //base motor rpm
+#define U_TGT_THRESHOLD 1000 //trigger threshold in mv for intake pot
 //#define AXIS_COUNT 3; //different motor axises we must interact with, base direction/angle excluded
 
 //********************************************************************************//

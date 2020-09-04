@@ -81,7 +81,7 @@ struct coordcontroller{
     double dist = sqrt(xGD*xGD+yGD*yGD);
     if (!isarrsame(xyaT, oldxyat, 3)) {
       distance = dist;
-      double sl = determinesmallest(100, 0.75*distance+20); //linear formula for s curve speed limit
+      double sl = determinesmallest(100, 0.75*distance+20); //linear formula for s curve speed limit, def not realistic but its close enough
       axiscontrollers[0].Scurve->a->vars[0] = sl;
       axiscontrollers[0].Scurve->b->vars[0] = sl; //could be jank if there isnt a different downward S curve
       //shouldnt be a problem tho cuz I dont think we ever deal with that case. this is here if u get memory errors
@@ -93,7 +93,7 @@ struct coordcontroller{
     double xCC = 0; //independent X axis PID
     double yCC = 0; //independent Y axis PID
     double rD = 0; //VERY janky figure out better solution than a hard multiplier
-    //we switch modes into a direct axis specific PID mode once we get close to prevent circular movement
+    //we switch modes into an axis specific PID mode once we get close to prevent circular movement
     //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
     xCC = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
     yCC = axiscontrollers[5].update(-yGD);
@@ -134,6 +134,9 @@ struct coordcontroller{
 
   //this variation is for usage with motionpaths, where axiscontrollers merely maintains the speed target given by TSP
   //TSP: Target speed, rotationmode: velocity optimization on/off, PF: percentage of angle to move by, 100% = 100
+  //To further explain PF, automatic angle optimization is controlled via a P loop, PF serves as a scaling factor to determine the reaction level the bot should have to this rotation
+  //I think I was trying to do some funky thing where I control PF with a PID loop but thats quite pointless
+  //We can probably get away with a constant or if you really wanted to try, some sort of formula where it scales with the distance PID
   bool update(double TSP, bool rotationmode, double PF){
       double xGD = (xyaT[0]-xG); //global x distance
       double yGD = (xyaT[1]-yG); //global y distance
@@ -161,7 +164,7 @@ struct coordcontroller{
       lcd::print(2,"180deg Angle Offset: %f", getrelrad(angleG,TGang+M_PI));
       lcd::print(3,"270deg CCW Angle Offset: %f", getrelrad(angleG,TGang+(3*M_PI/2)));
       lcd::print(4,"Current Offset: %f", rD);*/
-      if (isnanf(xCC)) xCC = 0; //honestly screw nah I would expect stuff to be so cheese that it defaults to a 0
+      if (isnanf(xCC)) xCC = 0; //honestly screw nan I would expect stuff to be so cheese that it defaults to a 0
       if (isnanf(yCC)) yCC = 0;
       if(isnanf(rD)) rD = 0;
       if (dist < 0.5){ //trigger x-y specific PID on activation
@@ -182,46 +185,3 @@ struct coordcontroller{
       return false;
     }
   };
-
-//Controller for motion segements
-struct segementcontroller{
-  coordcontroller* controller;
-  motorf* Fmotors;
-  double Tpercentage = 0; //% to completed compositebezier
-  double Lpercentage = 0; //% to full angle setting
-  bool rotmode = false; //true: enable angle optimization, false: disable angle optimization
-  motion* Cpath;
-  bool isfullycomplete = false;
-  segementcontroller(coordcontroller b, motorf set[]){
-    controller = &b; Fmotors = set;
-  }
-  bool update(){
-    if(!Cpath) return true; //passes if empty motion pointer
-    rotmode = (Tpercentage < Cpath->Disablethreshold-Cpath->Enablethreshold);
-    if (!rotmode){
-      if(Tpercentage < Cpath->Enablethreshold) Lpercentage = (Tpercentage/Cpath->Enablethreshold)*100;
-      else Lpercentage = ((Tpercentage-Cpath->Disablethreshold)/(100-Cpath->Disablethreshold))*100;
-    }
-    bool leg = true; //1
-    if (Tpercentage == 100) controller->update(); //switch to standard auto stable upon hitting 100% movement
-    else {
-      leg = false;
-      if(controller->update(Cpath->DSC->getval(Tpercentage),rotmode,Lpercentage)) Tpercentage+=0.1; //10 segements per beziernp
-    }
-    Cpath->update(Tpercentage);
-/*    for(int i = 0; i < AXIS_COUNT; i++){
-      Fmotors[i].PID_MOVE_TARGET(Cpath->updvals[i]);
-      //^^note that motorF is loosely held at least until the final move.
-      //motorF targets are tied to the progress of the base b/c stopping the base is impractical
-      leg*=Fmotors[i].PID_MOVE_CYCLE(); //1*0 = 0(false), 1*1 = 1(true)
-    }*/
-    if (leg) return true; //Everything has hit the target
-    return false; //update cycles still nescessary to hit the targets
-  }
-  //sets new compositebezier
-  void setNP(motion a){
-    Tpercentage = 0;
-    Lpercentage = 0;
-    Cpath = &a;
-  }
-};
