@@ -3,68 +3,62 @@
 #include "globalvar.hpp"
 using namespace pros;
 #pragma once
+//TBD: Fix headers, also implement the subsystem controls already
 
-  //curveS: a single S curve
-  //Constraints(suggested): range: 0 to 50, upwards.  max height 100;
-  //TBD, maybe actually calculate proper motion curves later and emulate them with curveS
+//curveS: a single S curve
+//Constraints(suggested): range: 0 to 50, upwards.  max height 100;
+//TBD, maybe actually calculate proper motion curves later and emulate them with curveS
 struct curveS{
-  double* vars;
+double vars[4];
 public:
-  curveS(double arr[]){vars = arr;}
-  double getval(double pos){
-    return (vars[0]-vars[3])/(1+pow(M_E,-vars[1]*(pos-vars[2]))) + vars[3];
+//below: this is stupid and pointless but I cant get the access to work correctly otherwise
+curveS(double arr[]){vars[0] = arr[0]; vars[1] = arr[1];vars[2] = arr[2];vars[3] = arr[3];}
+double getval(double pos){
+  return (vars[0]-vars[3])/(1+pow(M_E,-vars[1]*(pos-vars[2]))) + vars[3];
+}
+};
+
+//dualScurve: a set of 2 S curves made to aproximate what motion profiling might look like
+/*dualScurve should extend curveS, also should be an interface ngl so we can use both one or two
+the current pointer access method is ok for these b/c they dont store anything motor-specific,
+its literally just a formula*/
+//TBD: scale dualScurve to actual time values. an S curve is supposed to be relative to time, not displacement like we use it
+//Even right now it still outperforms raw PIDs, but we will get better performance if we adjust it
+//To do that, we have to unconvert the area(the displacement) of the curve into its corrospondent speed in the S curve
+//this requires some calc stuff so it's gonna take a while
+class dualScurve{
+curveS a;
+curveS b;
+public:
+//dualScurve(curveS c, curveS d){a=&c; b=&d;}
+//dualScurve(curveS c){a=&c;}
+//below: direct to curveS system b/c we don't actually use curveS for anything meaningful other than this
+dualScurve(double arr1[], double arr2[]):a(arr1),b(arr2){};
+double getval(double pos){
+ // double pos = fabs(ps);
+//  lcd::print(1,"given value: %f", pos);
+  if (pos < 50) {
+    //lcd::print(2,"return value: %f", a->getval(pos));
+    return a.getval(pos);
   }
+//  lcd::print(2,"return value: %f", b->getval(100-pos));
+  return b.getval(100-pos);
+  //for the part past 50%, we flip the curveS, so that we only need one curve from 0-50 for each different profile
+}
 };
-
-  //dualScurve: a set of 2 S curves made to aproximate what motion profiling might look like
-  /*dualScurve should extend curveS, also should be an interface ngl so we can use both one or two
-  the current pointer access method is ok for these b/c they dont store anything motor-specific,
-  its literally just a formula*/
-  //TBD: scale dualScurve to actual time values. an S curve is supposed to be relative to time, not displacement like we use it
-  //Even right now it still outperforms raw PIDs, but we will get better performance if we adjust it
-  //To do that, we have to unconvert the area(the displacement) of the curve into its corrospondent speed in the S curve
-  //this requires some calc stuff so it's gonna take a while
-struct dualScurve{
-  curveS* a;
-  curveS* b;
-  dualScurve(curveS c, curveS d){a=&c; b=&d;}
-  dualScurve(curveS c){a=&c;}
-  double getval(double ps){
-    double pos = fabs(ps);
-  //  lcd::print(1,"given value: %f", pos);
-    if (pos < 50) {
-      //lcd::print(2,"return value: %f", a->getval(pos));
-      return a->getval(pos);
-    }
-    else if (!b) {
-    //___int_least64_t_defined  lcd::print(2,"return value: %f", a->getval(100-pos));
-      return a->getval(100-pos);
-    }
-  //  lcd::print(2,"return value: %f", b->getval(100-pos));
-    return b->getval(100-pos);
-    //for the part past 50%, we flip the curveS, so that we only need one curve from 0-50 for each different profile
-  };
-};
-
   //beziernp: a raw N-point bezier curve
   /*This is a full on proper n-point bezier curve, where we can add
   as many transformations as we want but only 2 garanteed target locations
   */
 
-  struct beziernp{
+struct beziernp{
       double (*coords)[2];
       int size; //coordinate size
       //params: Coordinates of NP bezier, amount of coordinates(not an index)
       //and yes, I actually need the size thing cuz pointers dont pass along the actual size
-    public:
       beziernp(double points[][2], int sie):size(sie){
     	  coords = points; //fancy speed and heading configurations precomputed in motion to reduce load
-        for(int i = 0; i <size; i++){
-          for (int o = 0; o < 2; o++){
-          //  printf("\nCoords (%d,%d) : %f",i,o,coords[i][o]);
-          }
         }
-      };
       //https://www.desmos.com/calculator/xlpbe9bgll
       void getvalF(double t){
         double x = 0; double y = 0;
@@ -75,19 +69,19 @@ struct dualScurve{
         }
         xyaT[0] = x;
         xyaT[1] = y;
-      };
+      }
       //formatting: t is iteration position, k is index, v is coordinate
       //Ptriangle is a set of precalculated binomial factors, up to degree 10
       double getCCF(double t, double k){
         return (Ptriangle[size-1][k])*pow((1-t),size-1-k)*pow(t,k); //to save performance we calc this once per coord
       };
-  };
+};
 
   //composite N-point bezier curve, currently set up to only go to degree 4. Custom points dataset to be implemented
   //for the moment, active speed and trajectory controls are going to be possible by code design, but we will use precalculated values for now until odometrycontroller's estimations are fixed
   //to implement that, each bezier must be generated at runtime upon completion of the last bezier, using the
   //velocity and heading values as subsitutes for second point of the bezier.
-  struct compositebezier{
+struct compositebezier{
     std::vector<beziernp> genarr; //WARNING: appending to this thing can kill your pointers
     //This constructor is for hard set degree 4 composites
     //data params: x, y, angle, angle scale factor
@@ -103,10 +97,12 @@ struct dualScurve{
           {data[i+1][0]-data[i+1][3]*cos(data[i+1][2]),data[i+1][1]-data[i+1][3]*sin(data[i+1][2])},  //so basically we will access params and multiply these values to do the speed transformation
           {data[i+1][0],data[i+1][1]}
         };
+        //now, you may wonder what this seemingly redundent params and pr stuff is for. BezierNP takes a 2d array pointer, and pr is a temp variable. params is used to save the pr values permanently
+        //this is b/c I cant figure out how to declare params directly like this, its a cheese solution but it indeed somehow works out
         for (int x = 0; x < 4; x++){
           for (int y = 0; y < 2; y++){
             params[x][y] = pr[x][y];
-            printf("PARAMS: %d, %d : %f\n",x,y,params[x][y]);
+            //printf("PARAMS: %d, %d : %f\n",x,y,params[x][y]);
           }
         }
         genarr.push_back(*(new beziernp(params,4)));
@@ -117,39 +113,69 @@ struct dualScurve{
     void updvalnd(double pct){
   	  double ival = (pct/100)*genarr.size();
   	  genarr[(int)floor(ival)].getvalF(ival-floor(ival));
-    };
+    }
   };
 
+//basic data instance which holds a the target and timeframe which to orient the bot
+struct orientation{
+  	double DR; //direction
+  	double AT; //activation threshold
+  	double DAT; //deactivation threshold
+    //construction params: angle, activation threshold, deactivation threshold
+  	orientation(double d, double a, double da){DR = d; AT = a; DAT = da;};
+  };
 
+//A combined structure to deal with a set of orientations within a single movement
+class orientationscheme{
+  	std::vector<orientation> orientationsys;
+  	int ind;
+  public:
+  	orientationscheme(double orientationset[][3], int size){
+  		ind = size-1;
+  	//yeah this size param shouldn't be needed but I cant get size calcs to work, I keep getting the size of pointers
+  		for (int i = size-1; i > -1; i--){
+  			orientationsys.push_back(
+  				*new orientation(
+  					orientationset[i][0], //direction
+  					orientationset[i][1], //activation threshold
+  					orientationset[i][2]  //deactivation threshold
+  	        ));
+  		}
+  	}
+  	//below: percent from 0-100, not 0.00-1.00
+  	void orientationset(double percent){
+  		if(ind < 0){
+  			anglemode = true; //enables automatic angle optimization if no more orientationsys targets left
+  			return;
+  		}
+  		//above: test first to prevent array out of bound error below if no index 0
+  		if(orientationsys[ind].AT <= percent){ //disable automatic angle optimization and set angle target
+  			anglemode = false;
+  			xyaT[2] = orientationsys[ind].DR;
+  		} else anglemode = true;
+  		if (orientationsys[ind].DAT <= percent){ //delete the current orientation object once it passes threshold
+  			ind--;								    //            and reenable angle optimization
+  		}
+  	}
+  };
+
+//this structure merges the speed controls, direction controls, and orientation controls into a single instance to access
+//TBD: implement motorsysinterface too, will require the headers to not be scuffed as it comes after this hpp file
+//potential fix approach - seperate the class definition into parts and pre-define everything at the top so everyone has refrences to everyone else
 struct motion{
-  compositebezier a;
-  std::vector<double>* val;
-  //BELOW: SHOULD BE WHAT AXIS_COUNT IS
-  double updvals[0]; //this entire passing through of the motorF values is kinda stupid, also this should be whatever AXIS_COUNT is
-  double Enablethreshold;
-  double Disablethreshold;
-  dualScurve* DSC;
-  double length; //this is raw length of all params, not max index
-  motion(std::vector<double> e[], int lth, double SV, double EV, dualScurve sc):a(e,lth){ //SV/EV: index at which to enable/disable angle optimization
-    val = e;
-    DSC = &sc;
-    //a = new compositebezier(val,lth);
-    length = lth;
-    Enablethreshold=(SV/lth)*100; //percent to enable angle optimization
-    Disablethreshold=(EV/lth)*100; //percent to disable angle optimization
-  }
-  void update(double perc){
-    double va = (determinesmallest(perc/100,1)); //scales percentage to correct values
-    int vr = ceil(va*length)-1; //arr index
-    //math.ceil(1.00) = 1, this prevents an array index error we get at 100% if we went with floor instead,
-    //where math.floor(1.00) = 1, while it should be 0, potentially exceeding the array
-    a.updvalnd(va);
-    xyaT[2] = val[vr][3]; //target angle confirmation
-  /*  for(int i = 0; i < AXIS_COUNT; i++){ //motorF update scheme, method to be revised
-      updvals[i] = val[vr][i+4]; //first 3 indexes are x, y, heading angle, real angle and so are ignored
-    }*/
-  }
-};
+  	dualScurve* g;
+  	compositebezier* cb;
+  	orientationscheme* ob;
+  	motion(dualScurve *h, compositebezier *e, orientationscheme *o){
+  		g = h; cb = e; ob = o;
+  	}
+  	void computepath(double perc){
+  		GVT = g->getval(perc); //update targeted velocity
+  		cb->updvalnd(perc); //update target point
+  		ob->orientationset(perc); //update angle target and rotation mode
+  	}
+  };
+
 /*PID: generic PID system*/
 //NOTE: DEFAULT TGT = 0
 struct PID{
@@ -187,8 +213,8 @@ struct PID{
     ratios = scalers; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
   //note: if dualScurve is to be used, input percentage to target values
-  PID(double scalers[], bool ms[], double limits[], dualScurve curve){
-    ratios = scalers; Scurve = &curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
+  PID(double scalers[], bool ms[], double limits[], dualScurve* curve){
+    ratios = scalers; Scurve = curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
   //sets a new target for the loop w/o resetting PIDa
   void set_tgt_soft(double tgt){

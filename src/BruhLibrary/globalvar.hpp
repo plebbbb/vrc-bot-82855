@@ -13,6 +13,7 @@ using namespace pros;
 #define STD_BTWHEEL_RADIUS 2.00 //4in wheel used on back wheel for testing bot
 #define BASE_MOTOR_RPM 200 //base motor rpm
 #define U_TGT_THRESHOLD 1000 //trigger threshold in mv for intake pot
+#define AOM_P_VAL 2 //angle optimization control loop P multiplier
 //#define AXIS_COUNT 3; //different motor axises we must interact with, base direction/angle excluded
 
 //********************************************************************************//
@@ -75,6 +76,7 @@ extern const std::vector<short> Ptriangle[];
 //amount of axises
 extern const int AXIS_COUNT;
 
-//base motor trajectories
-extern std::vector<std::vector<double>> moveinst[];
-//double[][axis count] is what it should be but we cant throw variables in there
+//global coordcontroller parameters
+//technically this is bad practice but at the same time going through all the layers to get to it is a painful thing
+extern bool anglemode; //enable/disable angle optimization
+extern bool GVT; //global velocity target

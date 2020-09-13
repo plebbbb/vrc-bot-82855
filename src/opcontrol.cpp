@@ -22,6 +22,7 @@ bool configoptions[]{
 //*******************************************************************************//
 //The actual code
 void opcontrol(){
+  //TBD: fix the pointers on these so they actually work
   coordcontroller mover(base,bPID); //TEMP FOR AUTON TESTING
   opcontrolcontroller useonlyinopcontrol(base,controlscheme,bPID[2],configoptions);
   //xyaT[0] = 20;

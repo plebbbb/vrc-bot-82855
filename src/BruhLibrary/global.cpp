@@ -80,7 +80,7 @@ double PIDKvals[][3] = {
   {3,0,1.5},          //direct X/Y axis PID
 };
 
-//FOR REFRENCE: below is V1.215, where we had decent direct PID performance
+//FOR REFRENCE: below is V1.215, where we had decent direct PID performance in line operation mode
 /*
 double PIDKvals[][3] = {
   {7.5,0.0005,2},     //direct distance PID
@@ -91,9 +91,9 @@ double PIDKvals[][3] = {
 }*/
 //********************************************************************************//
 /*PIDKvals format:
-S-curve enable/disable,
-fractional I enable/disable,
-I hardstop at target enable/disable*/
+S-curve enable/disable, - turns the P output into an S curve. it's quite rough but does give us a smoother motion. works only for percentage based PID loops
+fractional I enable/disable, - converts I into an asymptope equation where the I value approaches the I cap value
+I hardstop at target enable/disable - sets i to 0 when target reacher to prevent the I value from overshooting*/
 bool PIDSvals[][3] = {
   {false,false,true}, //standard
   {true,false,true}   //should be for motorFs and any speed PIDs
@@ -118,17 +118,44 @@ double Scurvevals[][4] = {
   {100,0.32,7,3}  //settings for the direction distance PID's starting half
 };
 
-//S curves
-curveS curves[] = {
-  curveS(Scurvevals[1]),
-  curveS(Scurvevals[2])
+//dualScurve wrapper, use Scurvevals to dictate curve types
+dualScurve* curvesets[] = {
+  new dualScurve(Scurvevals[0],Scurvevals[1]) //default desmos link, flipped past 50%
 };
 
-//dualScurve wrapper
-dualScurve curvesets[] = {
-  dualScurve(curves[0],curves[1]) //default desmos link, flipped past 50%
-};
 
+//********************************************************************************//
+//Auton control stuff
+
+//dataset for motion parameters
+//data input scheme: array of position params, array of orientation params
+//TBF fix declaration
+std::vector<std::vector<double[]>> motionparams[] = {
+    {
+      {
+        {0,0,M_PI/2,3},
+        {5,10,M_PI/2,5},
+        {15,10,M_PI,2},
+      },
+      {
+        {M_PI/2+1,15,30},
+        {M_PI,50,90},
+        {2*M_PI,95,100}
+      }
+    }
+  };
+
+
+//set of motion instances for actual auton processing
+//input scheme: dualScurve*, compositebezier*/new compositebezier, orientationscheme*/new orientaitionscheme
+motion motionpaths[] = {
+  motion(
+    curvesets[0],
+    new compositebezier(),
+    new orientationscheme()
+  ),
+
+}
 
 //********************************************************************************//
 //PID controllers
@@ -147,7 +174,8 @@ PID bPID[] = {
 PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup for a motorF
 
 //********************************************************************************//
-/*
+
+//TBD: this entire section was commented out, figure out why
 //Control scheme configuration
 //array format: left-right, forwards-back, clockwise-counterclockwise
 controller_analog_e_t controlscheme[]{
@@ -162,7 +190,7 @@ bool configoptions[]{
   true,
   true
 };
-*/
+
 //********************************************************************************//
 //motorf array
 motorf NBmotors[] = {

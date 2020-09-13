@@ -137,7 +137,7 @@ struct coordcontroller{
   //To further explain PF, automatic angle optimization is controlled via a P loop, PF serves as a scaling factor to determine the reaction level the bot should have to this rotation
   //I think I was trying to do some funky thing where I control PF with a PID loop but thats quite pointless
   //We can probably get away with a constant or if you really wanted to try, some sort of formula where it scales with the distance PID
-  bool update(double TSP, bool rotationmode, double PF){
+  bool updateMP(){
       double xGD = (xyaT[0]-xG); //global x distance
       double yGD = (xyaT[1]-yG); //global y distance
       double dist = sqrt(xGD*xGD+yGD*yGD);
@@ -153,7 +153,7 @@ struct coordcontroller{
       double TGang = atan2(yGD,xGD); //slope of current movement, should be done once per target point change but im lazy
       if (isnanf(TGang) && isinff(TGang)) TGang = xyaT[2]; //for the edge cases
       //angle optimization to ensure we are always having our wheels face 45 degrees during the middle of movement
-      if (rotationmode) rD = PF*determinesmallestA(
+      if (anglemode) rD = AOM_P_VAL*determinesmallestA(
           determinesmallestA(getrelrad(angleG,TGang),getrelrad(angleG,TGang+M_PI/2)),
           determinesmallestA(getrelrad(angleG,TGang+M_PI),getrelrad(angleG,TGang+(3*M_PI/2)))
       );
@@ -176,9 +176,9 @@ struct coordcontroller{
         yD = yCC*sin(getrelrad(angleG,M_PI))+xCC*sin(getrelrad(angleG-M_PI/2,0));
         rD = axiscontrollers[1].update(-20*(rD));
       }
-      mBase->vectormove(xD,yD,rD,TSP);
+      mBase->vectormove(xD,yD,rD,GVT);
       //less than 2 inch distance to commit to next stage, angle only relevant if rotationmode disabled
-      switch(rotationmode){ //this is some janky ass logic but it should work
+      switch(anglemode){ //this is some janky ass logic but it should work
         case 0: if (round(fabs(rD/(M_PI*2))*25) != 0) break; //if it is under angle threshold pass through to case 1
         case 1: if (round(dist/4) == 0) return true; //case if angle optimization is enabled
       }

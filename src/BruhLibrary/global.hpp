@@ -22,8 +22,7 @@ TO BE DONES:
 //********************************************************************************//
 
 //Scurve instances
-extern dualScurve curvesets[];
-extern curveS curves[];
+extern dualScurve* curvesets[];
 
 //PID template instances
 extern PID bPID[];
@@ -39,5 +38,7 @@ extern opcontrolcontroller useonlyinopcontrol;
 //extern segementcontroller seg;
 //TBD: add all the other controllers
 
-//std::vector of processed position commands
-extern std::vector<motion> processedpaths; //TBD: Make using a vector actually accomplish something
+//auton control datasets
+extern std::vector<std::vector<double[]>> motionparams[]
+
+extern motion motionpaths[];
