@@ -21,6 +21,8 @@ double estspd = 0;
 double heading = angleG;
 double xyaT[3] = {0,0,angleG};
 double vscalefac = 0;
+bool anglemode; 
+bool GVT;
 const int AXIS_COUNT = 0;
 
 //********************************************************************************//
@@ -198,7 +200,7 @@ PID bPID[] = {
   PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct Y axis PID
 };
 
-PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup for a motorF
+//PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup for a motorF
 
 //********************************************************************************//
 

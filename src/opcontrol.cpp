@@ -6,7 +6,7 @@ double ang = M_PI/2;
 //*******************************************************************************//
 //Control scheme configuration
 //array format: left-right, forwards-back, clockwise-counterclockwise
-controller_analog_e_t controlscheme[]{
+/*controller_analog_e_t controlscheme[]{
   ANALOG_LEFT_X,
   ANALOG_LEFT_Y,
   ANALOG_RIGHT_X
@@ -17,13 +17,13 @@ controller_analog_e_t controlscheme[]{
 bool configoptions[]{
   false,
   true
-};
+};*/
 
 //*******************************************************************************//
 //The actual code
 void opcontrol(){
   //TBD: fix the pointers on these so they actually work
-  coordcontroller mover(base,bPID); //TEMP FOR AUTON TESTING
+  /*coordcontroller mover(base,bPID); //TEMP FOR AUTON TESTING
   opcontrolcontroller useonlyinopcontrol(base,controlscheme,bPID[2],configoptions);
   //xyaT[0] = 20;
 //  xyaT[1] = 10;

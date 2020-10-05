@@ -27,24 +27,24 @@ its literally just a formula*/
 //To do that, we have to unconvert the area(the displacement) of the curve into its corrospondent speed in the S curve
 //this requires some calc stuff so it's gonna take a while
 class dualScurve{
-public:
-  curveS a;
-  curveS b;
-//dualScurve(curveS c, curveS d){a=&c; b=&d;}
-//dualScurve(curveS c){a=&c;}
-//below: direct to curveS system b/c we don't actually use curveS for anything meaningful other than this
-dualScurve(double arr1[], double arr2[]):a(arr1),b(arr2){};
-double getval(double pos){
- // double pos = fabs(ps);
-//  lcd::print(1,"given value: %f", pos);
-  if (pos < 50) {
-    //lcd::print(2,"return value: %f", a->getval(pos));
-    return a.getval(pos);
+  public:
+    curveS a;
+    curveS b;
+  //dualScurve(curveS c, curveS d){a=&c; b=&d;}
+  //dualScurve(curveS c){a=&c;}
+  //below: direct to curveS system b/c we don't actually use curveS for anything meaningful other than this
+  dualScurve(double arr1[], double arr2[]):a(arr1),b(arr2){};
+  double getval(double pos){
+   // double pos = fabs(ps);
+  //  lcd::print(1,"given value: %f", pos);
+    if (pos < 50) {
+      //lcd::print(2,"return value: %f", a->getval(pos));
+      return a.getval(pos);
+    }
+  //  lcd::print(2,"return value: %f", b->getval(100-pos));
+    return b.getval(100-pos);
+    //for the part past 50%, we flip the curveS, so that we only need one curve from 0-50 for each different profile
   }
-//  lcd::print(2,"return value: %f", b->getval(100-pos));
-  return b.getval(100-pos);
-  //for the part past 50%, we flip the curveS, so that we only need one curve from 0-50 for each different profile
-}
 };
   //beziernp: a raw N-point bezier curve
   /*This is a full on proper n-point bezier curve, where we can add
@@ -216,8 +216,8 @@ struct PID{
     ratios = scalers; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
   //note: if dualScurve is to be used, input percentage to target values
-  PID(double scalers[], bool ms[], double limits[], dualScurve* curve){
-    ratios = scalers; Scurve = curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
+  PID(double scalers[], bool ms[], double limits[], dualScurve curve){ //note: the dualScurve here may need to be adjusted
+    ratios = scalers; Scurve = &curve; Pmode = ms[0]; Imode = ms[1]; Izerocutoff = ms[2]; maxlimit = limits[0]; maxIlimit = limits[1];
   }
   //sets a new target for the loop w/o resetting PIDa
   void set_tgt_soft(double tgt){
