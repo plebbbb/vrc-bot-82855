@@ -82,8 +82,8 @@ struct coordcontroller{
     if (!isarrsame(xyaT, oldxyat, 3)) {
       distance = dist;
       double sl = determinesmallest(100, 0.75*distance+20); //linear formula for s curve speed limit, def not realistic but its close enough
-      axiscontrollers[0].Scurve->a->vars[0] = sl;
-      axiscontrollers[0].Scurve->b->vars[0] = sl; //could be jank if there isnt a different downward S curve
+      axiscontrollers[0].Scurve->a.vars[0] = sl;
+      axiscontrollers[0].Scurve->b.vars[0] = sl; //could be jank if there isnt a different downward S curve
       //shouldnt be a problem tho cuz I dont think we ever deal with that case. this is here if u get memory errors
       //for(int i = 0; i < 3; i++){oldxyat[i] = xyaT[i];}
       arraycopy(oldxyat, xyaT, 3); //TEST TO SEE IF THIS ACTUALLY WORKS NOW
@@ -133,10 +133,6 @@ struct coordcontroller{
   }
 
   //this variation is for usage with motionpaths, where axiscontrollers merely maintains the speed target given by TSP
-  //TSP: Target speed, rotationmode: velocity optimization on/off, PF: percentage of angle to move by, 100% = 100
-  //To further explain PF, automatic angle optimization is controlled via a P loop, PF serves as a scaling factor to determine the reaction level the bot should have to this rotation
-  //I think I was trying to do some funky thing where I control PF with a PID loop but thats quite pointless
-  //We can probably get away with a constant or if you really wanted to try, some sort of formula where it scales with the distance PID
   bool updateMP(){
       double xGD = (xyaT[0]-xG); //global x distance
       double yGD = (xyaT[1]-yG); //global y distance

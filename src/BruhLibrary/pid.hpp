@@ -27,9 +27,9 @@ its literally just a formula*/
 //To do that, we have to unconvert the area(the displacement) of the curve into its corrospondent speed in the S curve
 //this requires some calc stuff so it's gonna take a while
 class dualScurve{
-curveS a;
-curveS b;
 public:
+  curveS a;
+  curveS b;
 //dualScurve(curveS c, curveS d){a=&c; b=&d;}
 //dualScurve(curveS c){a=&c;}
 //below: direct to curveS system b/c we don't actually use curveS for anything meaningful other than this
@@ -87,9 +87,9 @@ struct compositebezier{
     //data params: x, y, angle, angle scale factor
     //use the length value(raw size() output), not max index for size
     //if intaking a std::vector
-    compositebezier(std::vector<double> data[], int len){
-  //	printf("TEST01\n");
-      for(int i = 0; i < len-1; i++){ //tbd change to an std::vector.insert if possible
+    compositebezier(std::vector<std::vector<double>> data){
+      //size-1 b/c we add one in each array already
+      for(int i = 0; i < data.size()-1; i++){ //tbd change to an std::vector.insert if possible
         double (*params)[2] = new double[4][2];
         double pr[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
           {data[i][0],data[i][1]},
@@ -130,10 +130,9 @@ class orientationscheme{
   	std::vector<orientation> orientationsys;
   	int ind;
   public:
-  	orientationscheme(double orientationset[][3], int size){
-  		ind = size-1;
-  	//yeah this size param shouldn't be needed but I cant get size calcs to work, I keep getting the size of pointers
-  		for (int i = size-1; i > -1; i--){
+  	orientationscheme(std::vector<std::vector<double>> orientationset){
+  		ind = orientationset.size()-1; //-1 as we iterate backwards so we start at the last index, size-1
+  		for (int i = ind-1; i > -1; i--){
   			orientationsys.push_back(
   				*new orientation(
   					orientationset[i][0], //direction
@@ -163,17 +162,21 @@ class orientationscheme{
 //TBD: implement motorsysinterface too, will require the headers to not be scuffed as it comes after this hpp file
 //potential fix approach - seperate the class definition into parts and pre-define everything at the top so everyone has refrences to everyone else
 struct motion{
+    double iterationperfac;
+    double perc = 0;
   	dualScurve* g;
   	compositebezier* cb;
   	orientationscheme* ob;
-  	motion(dualScurve *h, compositebezier *e, orientationscheme *o){
-  		g = h; cb = e; ob = o;
+  	motion(dualScurve *h, compositebezier *e, orientationscheme *o, double c){
+  		g = h; cb = e; ob = o; iterationperfac = c;
   	}
-  	void computepath(double perc){
+  	bool computepath(){
+      perc += iterationperfac;
+      return (perc > 100) ? true:false; //if percent > 100 return true
   		GVT = g->getval(perc); //update targeted velocity
   		cb->updvalnd(perc); //update target point
   		ob->orientationset(perc); //update angle target and rotation mode
-  	}
+    }
   };
 
 /*PID: generic PID system*/

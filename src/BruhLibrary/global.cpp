@@ -128,34 +128,61 @@ dualScurve* curvesets[] = {
 //Auton control stuff
 
 //dataset for motion parameters
+/*
+
+*/
 //data input scheme: array of position params, array of orientation params
-//TBF fix declaration
-std::vector<std::vector<double[]>> motionparams[] = {
-    {
-      {
+//yes, this is a sketchy way of data input, and yes we are doing this because we dont have to make anything fancier
+/*formatting scheme:
+     the first index holds entire auton sequences, as in skills auton or alliance side auton
+     the second index holds complete sets of parameters for motion instances, being a composize bezier curve with rotation and movement commands
+     the third index [0] is the set of bezier transformations for each motion's composite bezier
+         The first index of this transformation should be the current position, in the new desired direction, not the one from the last movement
+     the third index [1] is the set of rotation commands in each movement
+        These are ordered from earliest to latest ranges
+        In non-specified ranges, automatic angle optimization is enabled. It is recommended to enable this for the early part of each motion to prevent hitting things from large spins
+     the third index [2] is to be the set of subsystem commands once those get implemented*/
+
+std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] = {
+  { //Test sequence
+    { //Motion Set 1
+      { //Composite bezier set 1
         {0,0,M_PI/2,3},
         {5,10,M_PI/2,5},
         {15,10,M_PI,2},
       },
-      {
+      { //Rotational command array 1
+        {M_PI/2+1,15,30},
+        {M_PI,50,90},
+        {2*M_PI,95,100}
+      }
+    },
+    { //Motion Set 2
+      { //Composite bezier set 2
+        {15,10,3*M_PI/2,3},
+        {5,10,3*M_PI/2,5},
+        {0,0,3*M_PI/2,2},
+      },
+      { //Rotational command array 2
         {M_PI/2+1,15,30},
         {M_PI,50,90},
         {2*M_PI,95,100}
       }
     }
-  };
+  }
+};
 
 
 //set of motion instances for actual auton processing
-//input scheme: dualScurve*, compositebezier*/new compositebezier, orientationscheme*/new orientaitionscheme
-motion motionpaths[] = {
-  motion(
+//input scheme: dualScurve*, compositebezier*/new compositebezier, orientationscheme*/new orientaitionscheme, iteration percentage factor
+std::vector<motion> motionpaths = {
+  motion( //Motion set 1
     curvesets[0],
-    new compositebezier(),
-    new orientationscheme()
-  ),
-
-}
+    new compositebezier(motionparams[0][0][0]),
+    new orientationscheme(motionparams[0][0][1]),
+    5
+  )
+};
 
 //********************************************************************************//
 //PID controllers
@@ -252,14 +279,12 @@ double factorial(double n){
 
 //determine smallest functions
 double determinesmallest(double a, double b){
-  if (a > b) return b;
-  return a;
+  return (a > b) ? b : a;
 }
 
 //determine smallest functions, absolute edition
 double determinesmallestA(double a, double b){
-  if (fabs(a) > fabs(b)) return b;
-  return a;
+  return (fabs(a) > fabs(b)) ? b : a;
 }
 
 //jank copy array
