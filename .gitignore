@@ -9,8 +9,11 @@
 # PROS
 bin/
 .vscode/
+firmware/
+include/
 compile_commands.json
 temp.log
 temp.errors
+project.pros
 *.ini
 .d/

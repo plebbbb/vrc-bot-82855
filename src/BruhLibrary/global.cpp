@@ -15,13 +15,12 @@ double speedmultiplier = 100; //IN PERCENT, 100 being 100%
 double angleG = M_PI/2;
 double xG = 0;
 double yG = 0;
-double xR = 0;
-double yR = 0;
+double xR = 0; //appears unused
+double yR = 0; //appears unused
 double estspd = 0;
 double heading = angleG;
 double xyaT[3] = {0,0,angleG};
-double vscalefac = 0;
-bool anglemode; 
+bool anglemode;
 bool GVT;
 const int AXIS_COUNT = 0;
 
@@ -140,6 +139,7 @@ dualScurve* curvesets[] = {
      the second index holds complete sets of parameters for motion instances, being a composize bezier curve with rotation and movement commands
      the third index [0] is the set of bezier transformations for each motion's composite bezier
          The first index of this transformation should be the current position, in the new desired direction, not the one from the last movement
+         Composite bezier indexes: {X, Y, Angle at (x,y), angle transformation factor}
      the third index [1] is the set of rotation commands in each movement
         These are ordered from earliest to latest ranges
         In non-specified ranges, automatic angle optimization is enabled. It is recommended to enable this for the early part of each motion to prevent hitting things from large spins

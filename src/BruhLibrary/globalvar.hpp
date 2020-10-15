@@ -18,7 +18,10 @@ using namespace pros;
 
 //********************************************************************************//
 /*GLOBAL VARIABLES*/
-//TBD - use std::vector when it's actually nescessary instead of spamming so many arrays
+//note that this is technically bad coding practice in the sense that the interactions to these variables may get convoluted due to the sheer size of the code
+//luckily for us, our design targets aren't actually big enough for this to be a significant problem so we can kinda get away with it
+//To kinda bypass this problem, all use cases of the more obscure variables will be listed here.
+
 
 //V5 controller
 extern Controller ctrl;
@@ -63,8 +66,6 @@ extern double Scurvevals[][4];
 extern bool confirmedauton;
 extern int selectedauton;
 
-//speed bezier curve transformation weight factor
-extern double vscalefac;
 
 //opcontrol configuration
 extern controller_analog_e_t controlscheme[];

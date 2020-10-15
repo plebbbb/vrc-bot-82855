@@ -107,7 +107,7 @@ struct motorw{
   - Directional control with speed controls
   - Rotational control with PID stabilization
 */
-//also its actually stupid efficient, at least the vector calculation parts. The if statements, idk.
+//also its actually efficient, at least the vector calculation parts. The if statements, idk.
 //we dont even call a single cos or sin function, and only do multiplication and adding, so its super fast compared to the other approaches people have been showing
 //we make an assumption that there is always a motor which perfectly counters any unwanted forces tho, which works for the most part but also
 //means that we will end up relying a lot on heading PIDs for auton as our base isn't actually perfectly symmetrical
@@ -140,7 +140,7 @@ struct basecontroller{
 
 //opcontrolcontroller: wrapper for basecontroller to be used during manual drive.
 //we may implement motorF features into it as the situation dictates
-  struct opcontrolcontroller{
+struct opcontrolcontroller{
     basecontroller* ssc; //pointer to basecontroller
     controller_analog_e_t* controls; //joystick inputs
     bool* configuration; //config for code
@@ -151,7 +151,7 @@ struct basecontroller{
     //tbd - deal with interia issues from rotation at high speeds, PID insta targets what happens when analog stick is 0
     void move(){
       double rs = -deadzonecompute(ctrl.get_analog(controls[2]));
-      if (configuration[1]) rs = rotationcompute();
+      if (configuration[1]) rs = rotationcompute(); //TBD: implement auto 45 degree angle holder here, use the ? notation
       if (configuration[0]) relativemove(rs);
       else absolutemove(rs);
     }

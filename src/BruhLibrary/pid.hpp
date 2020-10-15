@@ -99,6 +99,7 @@ struct compositebezier{
         };
         //now, you may wonder what this seemingly redundent params and pr stuff is for. BezierNP takes a 2d array pointer, and pr is a temp variable. params is used to save the pr values permanently
         //this is b/c I cant figure out how to declare params directly like this, its a cheese solution but it indeed somehow works out
+        //and as seemingly ridiculous the below solution is, yes, this is actually how you copy arrays.
         for (int x = 0; x < 4; x++){
           for (int y = 0; y < 2; y++){
             params[x][y] = pr[x][y];
