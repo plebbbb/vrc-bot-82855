@@ -143,7 +143,7 @@ struct basecontroller{
 struct opcontrolcontroller{
     basecontroller* ssc; //pointer to basecontroller
     controller_analog_e_t* controls; //joystick inputs
-    bool* configuration; //config for code
+    bool* configuration; //config for code, indexes: 0 - translational axises lock, 1 - angle lock, 2 - quadratic speed weighting
     double tang;
     PID* rot;
     opcontrolcontroller(basecontroller b, controller_analog_e_t* css, PID ro, bool* config){
@@ -151,6 +151,7 @@ struct opcontrolcontroller{
     //tbd - deal with interia issues from rotation at high speeds, PID insta targets what happens when analog stick is 0
     void move(){
       double rs = -deadzonecompute(ctrl.get_analog(controls[2]));
+      logspeedcompute(ctrl.get_analog(controls[0]));
       if (configuration[1]) rs = rotationcompute(); //TBD: implement auto 45 degree angle holder here, use the ? notation
       if (configuration[0]) relativemove(rs);
       else absolutemove(rs);
@@ -191,6 +192,9 @@ struct opcontrolcontroller{
     double deadzonecompute(double in){
       if (in > 10) return in;
       return 0;
+    }
+    double logspeedcompute(double in){
+      speedmultiplier = pow(((10*in)/127),2);
     }
   };
 
