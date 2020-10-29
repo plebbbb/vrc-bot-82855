@@ -124,6 +124,12 @@ class dualScurve{
         xyaT[0] = (*cd)[0];
         xyaT[1] = (*cd)[1];
         tgtangent = atan2((*tancd)[1],(*tancd)[0]); //compute angle in radians to face to be tangent
+        cd->clear();
+        cd->shrink_to_fit();
+        cd = NULL;
+        tancd->clear();
+        tancd->shrink_to_fit();
+        tancd = NULL;
       }
     };
 
