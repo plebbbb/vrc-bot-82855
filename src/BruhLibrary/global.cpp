@@ -20,6 +20,7 @@ double yR = 0; //appears unused
 double estspd = 0;
 double heading = angleG;
 double xyaT[3] = {0,0,angleG};
+double tgtangent = angleG;
 bool anglemode;
 bool GVT;
 const int AXIS_COUNT = 0;

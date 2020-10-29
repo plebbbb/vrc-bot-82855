@@ -50,72 +50,82 @@ class dualScurve{
   /*This is a full on proper n-point bezier curve, where we can add
   as many transformations as we want but only 2 garanteed target locations
   */
-
-struct beziernp{
-      double (*coords)[2];
-      int size; //coordinate size
-      //params: Coordinates of NP bezier, amount of coordinates(not an index)
-      //and yes, I actually need the size thing cuz pointers dont pass along the actual size
-      beziernp(double points[][2], int sie):size(sie){
-    	  coords = points; //fancy speed and heading configurations precomputed in motion to reduce load
+  struct beziernp{
+        double (*coords)[2];
+        int size; //coordinate size
+        //params: Coordinates of NP bezier, amount of coordinates(not an index)
+        //and yes, I actually need the size thing cuz pointers dont pass along the actual size
+        beziernp(double points[][2], int sie):size(sie){
+      	  coords = points; //fancy speed and heading configurations precomputed in motion to reduce load
+          }
+        //https://www.desmos.com/calculator/xlpbe9bgll
+        std::vector<double>* getvalF(double t){
+          std::vector<double>* xy = new std::vector<double>; //this can 100% cause memory problems if I screw up memory management b/c this whole structure is garbo. pay attention to it if we have any issues like that
+          xy->push_back(0);
+          xy->push_back(0);
+          for (int i = 0; i < size; i++){
+            double ccfactor = getCCF(t,i);
+            (*xy)[0]+=ccfactor*coords[i][0];
+            (*xy)[1]+=ccfactor*coords[i][1];
+          }
+          return xy;
         }
-      //https://www.desmos.com/calculator/xlpbe9bgll
-      void getvalF(double t){
-        double x = 0; double y = 0;
-        for (int i = 0; i < size; i++){
-          double ccfactor = getCCF(t,i);
-          x+=ccfactor*coords[i][0];
-          y+=ccfactor*coords[i][1];
-        }
-        xyaT[0] = x;
-        xyaT[1] = y;
-      }
-      //formatting: t is iteration position, k is index, v is coordinate
-      //Ptriangle is a set of precalculated binomial factors, up to degree 10
-      double getCCF(double t, double k){
-        return (Ptriangle[size-1][k])*pow((1-t),size-1-k)*pow(t,k); //to save performance we calc this once per coord
-      };
-};
+        //formatting: t is iteration position, k is index, v is coordinate
+        //Ptriangle is a set of precalculated binomial factors, up to degree 10
+        double getCCF(double t, double k){
+          return (Ptriangle[size-1][k])*pow((1-t),size-1-k)*pow(t,k); //to save performance we calc this once per coord
+        };
+  };
 
   //composite N-point bezier curve, currently set up to only go to degree 4. Custom points dataset to be implemented
   //for the moment, active speed and trajectory controls are going to be possible by code design, but we will use precalculated values for now until odometrycontroller's estimations are fixed
   //to implement that, each bezier must be generated at runtime upon completion of the last bezier, using the
   //velocity and heading values as subsitutes for second point of the bezier.
-struct compositebezier{
-    std::vector<beziernp> genarr; //WARNING: appending to this thing can kill your pointers
-    //This constructor is for hard set degree 4 composites
-    //data params: x, y, angle, angle scale factor
-    //use the length value(raw size() output), not max index for size
-    //if intaking a std::vector
-    compositebezier(std::vector<std::vector<double>> data){
-      //size-1 b/c we add one in each array already
-      for(int i = 0; i < data.size()-1; i++){ //tbd change to an std::vector.insert if possible
-        double (*params)[2] = new double[4][2];
-        double pr[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
-          {data[i][0],data[i][1]},
-          {data[i][3]*cos(data[i][2])+data[i][0],data[i][3]*sin(data[i][2])+data[i][1]}, //Speed configuration will be dealt with externally in the speed controller
-          {data[i+1][0]-data[i+1][3]*cos(data[i+1][2]),data[i+1][1]-data[i+1][3]*sin(data[i+1][2])},  //so basically we will access params and multiply these values to do the speed transformation
-          {data[i+1][0],data[i+1][1]}
-        };
-        //now, you may wonder what this seemingly redundent params and pr stuff is for. BezierNP takes a 2d array pointer, and pr is a temp variable. params is used to save the pr values permanently
-        //this is b/c I cant figure out how to declare params directly like this, its a cheese solution but it indeed somehow works out
-        //and as seemingly ridiculous the below solution is, yes, this is actually how you copy arrays.
-        for (int x = 0; x < 4; x++){
+  struct compositebezier{
+      std::vector<beziernp> genarr; //WARNING: appending to this thing can kill your pointers
+      //This constructor is for hard set degree 4 composites
+      //data params: x, y, angle, angle scale factor
+      //use the length value(raw size() output), not max index for size
+      //if intaking a std::vector
+      std::vector<beziernp> tanarr;
+      compositebezier(std::vector<std::vector<double>> data){
+        //size-1 b/c we add one in each array already
+        for(int i = 0; i < data.size()-1; i++){ //tbd change to an std::vector.insert if possible
+          double (*params)[2] = new double[4][2];
+          double (*pslopes)[2] = new double[3][2];
+          double pr[][2] = { //TBD throw this directly into the beziernp instead of creating it externally
+            {data[i][0],data[i][1]},
+            {data[i][3]*cos(data[i][2])+data[i][0],data[i][3]*sin(data[i][2])+data[i][1]}, //Speed configuration will be dealt with externally in the speed controller
+            {data[i+1][0]-data[i+1][3]*cos(data[i+1][2]),data[i+1][1]-data[i+1][3]*sin(data[i+1][2])},  //so basically we will access params and multiply these values to do the speed transformation
+            {data[i+1][0],data[i+1][1]}
+          };
+          //now, you may wonder what this seemingly redundent params and pr stuff is for. BezierNP takes a 2d array pointer, and pr is a temp variable. params is used to save the pr values permanently
+          //this is b/c I cant figure out how to declare params directly like this, its a cheese solution but it indeed somehow works out
+          //and as seemingly ridiculous the below solution is, yes, this is actually how you copy arrays.
           for (int y = 0; y < 2; y++){
-            params[x][y] = pr[x][y];
-            //printf("PARAMS: %d, %d : %f\n",x,y,params[x][y]);
+            for (int x = 0; x < 4; x++){
+              params[x][y] = pr[x][y];
+              //printf("PARAMS: %d, %d : %f\n",x,y,params[x][y]);
+            }
+            for (int xo = 0; xo < 3; xo++){
+              pslopes[xo][y] = pr[xo+1][y]-pr[xo][y]; //the slope of a bezier curve is another bezier curve where each point is the difference of each set of 2 points
+            }
           }
+          genarr.push_back(*(new beziernp(params,4)));
+          tanarr.push_back(*(new beziernp(pslopes,3)));
         }
-        genarr.push_back(*(new beziernp(params,4)));
+      };
+      //safe, no deletion mode. In retrospect this is probably sufficient. Each beziernp is like 8 bytes so we shouldn't see any issues given that we have like 40MB of usable memory
+      //percent input from 0-100, not 0.00-1.00
+      void updvalnd(double pct){
+    	  double ival = (pct/100)*genarr.size();
+        std::vector<double>* cd = genarr[(int)floor(ival)].getvalF(ival-floor(ival));
+        std::vector<double>* tancd = tanarr[(int)floor(ival)].getvalF(ival-floor(ival));
+        xyaT[0] = (*cd)[0];
+        xyaT[1] = (*cd)[1];
+        tgtangent = atan2((*tancd)[1],(*tancd)[0]); //compute angle in radians to face to be tangent
       }
     };
-    //safe, no deletion mode. In retrospect this is probably sufficient. Each beziernp is like 8 bytes so we shouldn't see any issues given that we have like 40MB of usable memory
-    //percent input from 0-100, not 0.00-1.00
-    void updvalnd(double pct){
-  	  double ival = (pct/100)*genarr.size();
-  	  genarr[(int)floor(ival)].getvalF(ival-floor(ival));
-    }
-  };
 
 //basic data instance which holds a the target and timeframe which to orient the bot
 struct orientation{

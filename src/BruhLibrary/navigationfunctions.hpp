@@ -61,6 +61,7 @@ struct odometrycontroller{
     a bit of distinction between each layer of sortware interaction. This way,
     troubleshooting, as well as understanding the code can be a bit easier.
 */
+//TBD: refactor coordcontroller into multiple processing functions per update function. It is bloaty, at least the independent line update function.
 struct coordcontroller{
   basecontroller* mBase;
   double oldxyat[3] = {0,0,0};
@@ -72,6 +73,7 @@ struct coordcontroller{
     potential camera implementation: overload update with version that replaces r and perp with camera controls
     this overload would input the desired color profile that the camera is looking for.
     note that constructor must be updated for this*/
+  //TBD: the current oldxyat system is overkill. Simplify AOM update checks into a saner configuration.
   bool update(){
     //double yO = 0;
     //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
@@ -79,6 +81,8 @@ struct coordcontroller{
     double xGD = (xyaT[0]-xG); //global x distance
     double yGD = (xyaT[1]-yG); //global y distance
     double dist = sqrt(xGD*xGD+yGD*yGD);
+    //the whole idea of this is to figure out what direction we moved in so we can auto orient ourselves in the most efficient direction.
+    //the current implementation uses instanious rates of change to do this, meaning that if we dont move things get messed up by divison by zero.
     if (!isarrsame(xyaT, oldxyat, 3)) {
       distance = dist;
       double sl = determinesmallest(100, 0.75*distance+20); //linear formula for s curve speed limit, def not realistic but its close enough
@@ -133,6 +137,7 @@ struct coordcontroller{
   }
 
   //this variation is for usage with motionpaths, where axiscontrollers merely maintains the speed target given by TSP
+  //automatic angle optimization doesn't self check if it's divisible here, so it's dependent on AOM being disabled at the very end of each movement
   bool updateMP(){
       double xGD = (xyaT[0]-xG); //global x distance
       double yGD = (xyaT[1]-yG); //global y distance
@@ -175,8 +180,8 @@ struct coordcontroller{
       mBase->vectormove(xD,yD,rD,GVT);
       //less than 2 inch distance to commit to next stage, angle only relevant if rotationmode disabled
       switch(anglemode){ //this is some janky ass logic but it should work
-        case 0: if (round(fabs(rD/(M_PI*2))*25) != 0) break; //if it is under angle threshold pass through to case 1
-        case 1: if (round(dist/4) == 0) return true; //case if angle optimization is enabled
+        case 0: if (round(fabs(rD/(M_PI*2))*25) != 0) break; //if it is within angle tolerances pass through to case 1, only when we have a defined rotation target
+        case 1: if (round(dist/4) == 0) return true; //case if angle optimization is enabled, checks if bot within position tolerances
       }
       return false;
     }

@@ -39,8 +39,10 @@ extern double yG;
 extern double xR;
 extern double yR;
 
-//Array of target x, y, and angle
+//Array of target x, y, current angle
 extern double xyaT[3]; //is making this an array a good idea or not tbh not sure
+
+extern double tgtangent;
 
 //Observed heading of robot, rads
 extern double heading; //may end up useless
