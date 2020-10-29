@@ -124,6 +124,8 @@ class dualScurve{
         xyaT[0] = (*cd)[0];
         xyaT[1] = (*cd)[1];
         tgtangent = atan2((*tancd)[1],(*tancd)[0]); //compute angle in radians to face to be tangent
+        delete cd; //not too sure if this is correct. We make a non temporary vector in getvalF, and then delete it here after we don't need it anymore
+        delete tancd;
       }
     };
 
