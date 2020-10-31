@@ -11,6 +11,7 @@ bin/
 .vscode/
 firmware/
 include/
+include/api.h
 compile_commands.json
 temp.log
 temp.errors
