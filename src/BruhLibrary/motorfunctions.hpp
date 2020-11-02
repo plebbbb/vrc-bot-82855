@@ -143,7 +143,7 @@ struct basecontroller{
 /*to summerise the behavior of the config options:
 
   - If you click the specific angle target button(configuration[2]), you are automatically oriented towards the nearest 45 degree increment
-      - This overrides all other movement mode commands
+      - This overrides all other movement mode commands excluding translations
       - If you unclick this, you will return to whatever configuration you had before clicking the button
       - If you move the turn joystick, you will return to whatever configuration you had before clicking the button
       - Relative and absolute translation control is not affected and the button still changes the control scheme
@@ -161,7 +161,7 @@ struct basecontroller{
 struct opcontrolcontroller{
     basecontroller* ssc; //pointer to basecontroller
     controller_analog_e_t* controls; //joystick inputs
-    bool* configuration; //config for code, indexes: 0 - absolute oridentaiton translation controls, 1 - angle lock control, 2 - 45 degree angle targeting, 3 - quadratic speed weighting
+    bool* configuration; //config for code, indexes: 0 - absolute oridentaiton translation controls, 1 - angle lock control, 2 - 45 degree angle targeting, 3 - quadratic speed weighting toggle
     double tang;
     PID* rot;
     opcontrolcontroller(basecontroller b, controller_analog_e_t* css, PID ro, bool* config){
