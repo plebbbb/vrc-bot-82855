@@ -50,7 +50,7 @@ class dualScurve{
   /*This is a full on proper n-point bezier curve, where we can add
   as many transformations as we want but only 2 garanteed target locations
   */
-  struct beziernp{
+struct beziernp{
         double (*coords)[2];
         int size; //coordinate size
         //params: Coordinates of NP bezier, amount of coordinates(not an index)
@@ -81,7 +81,7 @@ class dualScurve{
   //for the moment, active speed and trajectory controls are going to be possible by code design, but we will use precalculated values for now until odometrycontroller's estimations are fixed
   //to implement that, each bezier must be generated at runtime upon completion of the last bezier, using the
   //velocity and heading values as subsitutes for second point of the bezier.
-  struct compositebezier{
+struct compositebezier{
       std::vector<beziernp> genarr; //WARNING: appending to this thing can kill your pointers
       //This constructor is for hard set degree 4 composites
       //data params: x, y, angle, angle scale factor
@@ -123,7 +123,7 @@ class dualScurve{
         std::vector<double>* tancd = tanarr[(int)floor(ival)].getvalF(ival-floor(ival));
         xyaT[0] = (*cd)[0];
         xyaT[1] = (*cd)[1];
-        tgtangent = atan2((*tancd)[1],(*tancd)[0]); //compute angle in radians to face to be tangent
+        tgtangent = fmod(atan2((*tancd)[1],(*tancd)[0]),2*M_PI); //compute angle in radians to face to be tangent
         delete cd; //not too sure if this is correct. We make a non temporary vector in getvalF, and then delete it here after we don't need it anymore
         delete tancd;
       }
