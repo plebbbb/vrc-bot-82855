@@ -140,10 +140,28 @@ struct basecontroller{
 
 //opcontrolcontroller: wrapper for basecontroller to be used during manual drive.
 //we may implement motorF features into it as the situation dictates
+/*to summerise the behavior of the config options:
+
+  - If you click the specific angle target button(configuration[2]), you are automatically oriented towards the nearest 45 degree increment
+      - This overrides all other movement mode commands
+      - If you unclick this, you will return to whatever configuration you had before clicking the button
+      - If you move the turn joystick, you will return to whatever configuration you had before clicking the button
+      - Relative and absolute translation control is not affected and the button still changes the control scheme
+      - Other modes can be enabled/disabled while this is active, but nothing will happen
+
+  - If you click the lock angle target button(configuration[1]), you will automatically face your bot to the last angle you had outside the controller deadzone
+      - If you move the turn joystick beyond the deadzone threshold, you will automatically error correct to that angle once the joystick is in the deadzone
+      - If you clck the angle lock button while active, the mode will be toggled off, and angle locking will be disabled
+
+  - If you click the absolute translation toggle(configuration[0]), you will toggle between two movement modes:
+      - Absolute translation mode keyed to the global x and y
+      - Relative translations relative to the local x and y derived from the current orientation
+
+*/
 struct opcontrolcontroller{
     basecontroller* ssc; //pointer to basecontroller
     controller_analog_e_t* controls; //joystick inputs
-    bool* configuration; //config for code, indexes: 0 - translational axises lock, 1 - angle lock, 2 - quadratic speed weighting
+    bool* configuration; //config for code, indexes: 0 - absolute oridentaiton translation controls, 1 - angle lock control, 2 - 45 degree angle targeting, 3 - quadratic speed weighting
     double tang;
     PID* rot;
     opcontrolcontroller(basecontroller b, controller_analog_e_t* css, PID ro, bool* config){
@@ -152,7 +170,8 @@ struct opcontrolcontroller{
     void move(){
       double rs = -deadzonecompute(ctrl.get_analog(controls[2]));
       logspeedcompute(ctrl.get_analog(controls[0]));
-      if (configuration[1]) rs = rotationcompute(); //TBD: implement auto 45 degree angle holder here, use the ? notation
+      if (rs != 0 && configuration[2]) configuration[2] = false;
+      rs = rot->update(angletgtcompute(rs));
       if (configuration[0]) relativemove(rs);
       else absolutemove(rs);
     }
@@ -165,10 +184,23 @@ struct opcontrolcontroller{
        )
      );
     }
-    double rotationcompute(){
-      if (deadzonecompute(ctrl.get_analog(controls[2]))){tang = angleG; return -deadzonecompute(ctrl.get_analog(controls[2]));} //max rot output
-      return rot->update(getrelrad(tang, angleG)); //PID stabilization to hold last input orientaiton
+    double angletgtcompute(double e){ //returns the angle target based on the current mode
+      if (configuration[1]) return deadzonecompute(e);
+      if (configuration[2]) {return determinesmallestA(determinesmallestA(
+          determinesmallestA(getrelrad(angleG,0),getrelrad(angleG,M_PI/4)),
+          determinesmallestA(getrelrad(angleG,M_PI/2),getrelrad(angleG,3*M_PI/4))
+        ),
+        determinesmallestA(
+            determinesmallestA(getrelrad(angleG,M_PI),getrelrad(angleG,5*M_PI/4)),
+            determinesmallestA(getrelrad(angleG,3*M_PI/2),getrelrad(angleG,2*M_PI))
+          )
+      );
+      }
+      return e;
+      //tbd: make a recursive version of this that takes entire functions, it'd be lowkey merge sort
+      //or even better, just iterate a for loop over all values
     }
+
     void relativemove(double rotation){
       ssc->vectormove(
         (double)ctrl.get_analog(controls[0]),
