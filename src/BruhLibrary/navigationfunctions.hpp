@@ -151,12 +151,10 @@ struct coordcontroller{
       //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
       xCC = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
       yCC = axiscontrollers[5].update(-yGD);
-      double TGang = atan2(yGD,xGD); //slope of current movement, should be done once per target point change but im lazy
-      if (isnanf(TGang) && isinff(TGang)) TGang = xyaT[2]; //for the edge cases
       //angle optimization to ensure we are always having our wheels face 45 degrees during the middle of movement
       if (anglemode) rD = AOM_P_VAL*determinesmallestA(
-          determinesmallestA(getrelrad(angleG,TGang),getrelrad(angleG,TGang+M_PI/2)),
-          determinesmallestA(getrelrad(angleG,TGang+M_PI),getrelrad(angleG,TGang+(3*M_PI/2)))
+          determinesmallestA(getrelrad(angleG,tgtangent),getrelrad(angleG,tgtangent+M_PI/2)),
+          determinesmallestA(getrelrad(angleG,tgtangent+M_PI),getrelrad(angleG,tgtangent+(3*M_PI/2)))
       );
       //Above: a potential optimization would be to get the average Tang of the new few segements and decide from that, to prevent cases of the bot pointlessly turning at the corner when that power could go to translating
       else rD = getrelrad(angleG,xyaT[2]); //rotationmode is held in fixed segements of the movement path and released near the target to the real final angle

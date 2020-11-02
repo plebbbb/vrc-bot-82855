@@ -11,42 +11,9 @@ There really isn't an advantage to doing stuff like this, I just thought it look
 cool. In the 65% chance this approach is risky, we can switch to a function based
 system
 
-*/
-
-//********************************************************************************//
-/*auton procedures:
-procedure documentation:
-  x coord, y coord, heading angle, final orientation angle, motorF values...
-*/
-std::vector<std::vector<double>> moveinst[] = {
-  //moveinst[0] - A test instance for solely base movement
-  {
-    {0,0,M_PI/2,M_PI/2},
-    {10,10,0,M_PI/2},
-    {20,20,M_PI/2,M_PI/2}
-  }
-};
-
-std::vector<motion> processedpaths = {
-  //motion(moveinst[0].data(),moveinst[0].data()->size(),0,1,curvesets[0])
-  //motion(moveinst[0].data(),3,0,1,curvesets[0])
-  //TBD: does moveinst[0].data work? and does the casting to double** work?
-};
-
-//postionsetTEST: Benchmark test to ensure the functionality of coordcontroller in direct line mode
-/*procedure documentation:
-  x coord, y coord, angle target... TBA
-*/
-double positionsetTEST[][3] = {
-  {0,0,M_PI/2},
-  {30,15,M_PI},
-  {10,10,(3*M_PI)/2},
-  {20,25,(M_PI)/5},
-  {0,30,M_PI*2},
-  {0,0,M_PI/2}
-};
-
-//********************************************************************************//
+//note: old auton config info here has been depreciated. New auton commands in global.cpp, may decide to move it over.
+//also, the old line testing code has been removed. See old commits for it, like pre october or something
+/********************************************************************************/
 void autonomous(){
   int cycle = 0;
   xyaT[0] = positionsetTEST[0][0];
@@ -60,5 +27,6 @@ void autonomous(){
     if (mover.updateMP()){
       if (motionpaths[arr].computepath() && arr < motionpaths.size()) arr += 1;
     }
+    delay(10); //refresh clock
   }
 }

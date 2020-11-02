@@ -217,7 +217,7 @@ controller_analog_e_t controlscheme[]{
 //Control scheme featureset
 //array format: enable absolute mode, enable angle hold
 bool configoptions[]{
-  true,
+  false,
   true
 };
 
@@ -236,8 +236,8 @@ motorf NBmotors[] = {
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base(xdrivemotors);
-//coordcontroller mover(base,bPID,xyaT);
-//opcontrolcontroller useonlyinopcontrol(base,controlscheme,ctrl,bPID[2],configoptions);
+coordcontroller mover = *new coordcontroller(base,bPID);
+opcontrolcontroller useonlyinopcontrol(base,controlscheme,bPID[2],configoptions);
 //********************************************************************************//
 //functions:
 double determinebiggest(double a, double b){

@@ -19,31 +19,13 @@ bool configoptions[]{
   true
 };*/
 
+//Above: probably fixed the problem forcing this to be here, if not, above was a working option
+
 //*******************************************************************************//
 //The actual code
 void opcontrol(){
-  //TBD: fix the pointers on these so they actually work
-  /*coordcontroller mover(base,bPID); //TEMP FOR AUTON TESTING
-  opcontrolcontroller useonlyinopcontrol(base,controlscheme,bPID[2],configoptions);
-  //xyaT[0] = 20;
-//  xyaT[1] = 10;
-//  xyaT[2] = M_PI;
-  //Motor b(9);
-  //below: testing environment for motorsys, motorsysinterface, and intakes
-  Motor g[] = {Motor(9), Motor(10,true)};
-  MotorSys gg[] = {Intakes(g,2)};
+  //TBD: fix the pointers on these so they actually work - probably done see older revisions for all the old stuff needed to get it to work
   while(true){
-    gg[0].NC(1,0);
-    delay(10);
-    if(gg[0].iscomplete) lcd::print(1,"NC WORKS");
-    lcd::print(2,"Pot Value: %f", gg[0].OPT);
-  }
-/*  while(true){
-    //NBmotors[0].move();
-    b.move(ctrl.get_digital(DIGITAL_UP)*127);
-    delay(10);
-  }*/
-/*  while(true){
     odo.posupdv2();
     odometrycontrollerdebug();
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
@@ -52,7 +34,7 @@ void opcontrol(){
     useonlyinopcontrol.move();
     if (ctrl.get_digital_new_press(DIGITAL_B)) configoptions[0] = !configoptions[0];
     delay(10);
-  }; /*//*
+  }; /*
 //below: test for autonomous
   while(true){
     odo.posupdv2();
