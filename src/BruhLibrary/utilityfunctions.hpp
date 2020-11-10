@@ -1,5 +1,5 @@
-#include "main.h"
 #pragma once
+#include "global.hpp"
 //********************************************************************************//
 /*UTLITITY FUNCTIONS*/
 //WARNING: MOST OF THESE ARE SUPER SKECTHY AND PROBABLY DONT WORK
@@ -41,3 +41,6 @@ extern void arraycopy(double tgt[], double ref[], int size);
 
 //checks array equlivancy, assumes same size
 extern bool isarrsame(double a[], double b[], int size);
+
+//auton selector
+extern void autonselection();

@@ -1,7 +1,4 @@
-#include "main.h"
 #include "BruhLibrary/global.hpp"
-using namespace pros;
-double ang = M_PI/2;
 
 //*******************************************************************************//
 //Control scheme configuration
@@ -27,7 +24,7 @@ void opcontrol(){
   //TBD: fix the pointers on these so they actually work - probably done see older revisions for all the old stuff needed to get it to work
   while(true){
     odo.posupdv2();
-    odometrycontrollerdebug();
+    //odometrycontrollerdebug();
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
     //lcd::print(1,"%f",useonlyinopcontrol.ssc->MAP[0].cosV);
     //useonlyinopcontrol.relativemove(ctrl.get_analog(ANALOG_RIGHT_X));

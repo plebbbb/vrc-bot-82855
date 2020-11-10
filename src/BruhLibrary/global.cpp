@@ -1,4 +1,3 @@
-#include "main.h"
 #include "global.hpp"
 // This cpp is for the declration of extern objects from global.hpp
 

@@ -1,9 +1,7 @@
-#include "main.h"
-#include "pid.hpp"
-#include "globalvar.hpp"
 #pragma once
+#include "global.hpp"
+
 //#include "utilityfunctions.hpp"
-using namespace pros;
 /*
 TO BE DONES:
   1. ORGANIZE EVERYTHING HERE INTO THEIR OWN RESPECTIVE .hpp files,

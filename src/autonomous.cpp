@@ -1,4 +1,3 @@
-#include "main.h"
 #include "BruhLibrary/global.hpp"
 
 /*
@@ -15,11 +14,6 @@ system
 //also, the old line testing code has been removed. See old commits for it, like pre october or something
 /********************************************************************************/
 void autonomous(){
-  int cycle = 0;
-  xyaT[0] = positionsetTEST[0][0];
-  xyaT[1] = positionsetTEST[0][1];
-  xyaT[2] = positionsetTEST[0][2];
-  coordcontroller mover(base,bPID); //TBD: fix this
   double perc = 0;
   int arr = 0;
   while(true){

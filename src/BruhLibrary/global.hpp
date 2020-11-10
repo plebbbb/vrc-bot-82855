@@ -1,12 +1,12 @@
+#pragma once
 #include "main.h"
-//#include "globalvar.hpp"
-//#include "utilityfunctions.hpp"
-//#include "pid.hpp"
-//#include "motorfunctions.hpp"
+using namespace pros;
+#include "utilityfunctions.hpp"
+#include "globalvar.hpp"
+#include "pid.hpp"
+#include "motorfunctions.hpp"
 #include "navigationfunctions.hpp"
 //#include "userinterface.hpp"
-#pragma once
-using namespace pros;
 /*
 TO BE DONES:
   1. ORGANIZE EVERYTHING HERE INTO THEIR OWN RESPECTIVE .hpp files,

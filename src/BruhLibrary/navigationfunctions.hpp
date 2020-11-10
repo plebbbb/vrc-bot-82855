@@ -1,10 +1,5 @@
-#include "main.h"
 #pragma once
-#include "motorfunctions.hpp"
-//#include "pid.hpp"
-//#include "globalvar.hpp"
-//#include "utilityfunctions.hpp"
-using namespace pros;
+#include "global.hpp"
 
 
 struct odometrycontroller{

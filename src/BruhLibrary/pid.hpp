@@ -1,8 +1,5 @@
-#include "main.h"
-#include "utilityfunctions.hpp"
-#include "globalvar.hpp"
-using namespace pros;
 #pragma once
+#include "global.hpp"
 //TBD: Fix headers, also implement the subsystem controls already
 
 //curveS: a single S curve

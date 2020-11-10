@@ -1,6 +1,5 @@
-#include "main.h"
-using namespace pros;
 #pragma once
+#include "global.hpp"
 
 //********************************************************************************//
 /*GLOBAL DEFINITIONS*/
