@@ -1,10 +1,15 @@
 //#pragma once
 #include "global.hpp"
+
 bool confirmedauton = false;
 int selectedauton = 0;
 
+// AUTONSELECTION
 void autonselection(){
   int msDelay = 50; // Delay in ms
+  int maxAuton = 4; // Max auton num (0 to this inclusive)
+  std::string autonName[5] = {"zero", "one", "two", "three", "four"}; // Auton names
+
   ctrl.clear();
 
   // Main Loop
@@ -16,14 +21,18 @@ void autonselection(){
       if(ctrl.get_digital_new_press(DIGITAL_LEFT)){
         selectedauton--;
         if(selectedauton < 0){
-          selectedauton = 4;
+          selectedauton = maxAuton;
         }
+        ctrl.clear();
+        ctrl.set_text(0, 0, ("AUTON " + autonName[selectedauton])); // Selected auton name
       }
       else if(ctrl.get_digital_new_press(DIGITAL_RIGHT)){
         selectedauton++;
-        if(selectedauton > 4){
+        if(selectedauton > maxAuton){
           selectedauton = 0;
         }
+        ctrl.clear();
+        ctrl.set_text(0, 0, ("AUTON " + autonName[selectedauton])); // Selected auton name
       }
 
       // A to confirm selection
