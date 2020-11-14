@@ -14,13 +14,15 @@ system
 //also, the old line testing code has been removed. See old commits for it, like pre october or something
 /********************************************************************************/
 void autonomous(){
-  /*double perc = 0;
+  double perc = 0;
   int arr = 0;
+  motionpaths[arr].computepath();
   while(true){
     odo.posupdv2();
+    odometrycontrollerdebug();
     if (mover.updateMP()){
-      if (motionpaths[arr].computepath() && arr < motionpaths.size()) arr += 1;
+      if (motionpaths[arr].computepath() && arr < motionpaths.size()-1) arr += 1;
     }
     delay(10); //refresh clock
-  }*/
+  }
 }

@@ -40,6 +40,6 @@ extern intakecontroller intakes;
 //TBD: add all the other controllers
 
 //auton control datasets
-extern std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[];
+extern const std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[];
 
 extern std::vector<motion> motionpaths;

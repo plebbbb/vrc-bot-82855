@@ -19,9 +19,10 @@ double yR = 0; //appears unused
 double estspd = 0;
 double heading = angleG;
 double xyaT[3] = {0,0,angleG};
+double tangentvals[2] = {0};
 double tgtangent = angleG;
 bool anglemode;
-bool GVT;
+double GVT = 0;
 const int AXIS_COUNT = 0;
 
 //********************************************************************************//
@@ -145,7 +146,7 @@ dualScurve* curvesets[] = {
         In non-specified ranges, automatic angle optimization is enabled. It is recommended to enable this for the early part of each motion to prevent hitting things from large spins
      the third index [2] is to be the set of subsystem commands once those get implemented*/
 
-std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] = {
+const std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] = {
   { //Test sequence
     { //Motion Set 1
       { //Composite bezier set 1
@@ -178,11 +179,11 @@ std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] = {
 //set of motion instances for actual auton processing
 //input scheme: dualScurve*, compositebezier*/new compositebezier, orientationscheme*/new orientaitionscheme, iteration percentage factor
 std::vector<motion> motionpaths = {
-  motion( //Motion set 1
+  *new motion( //Motion set 1
     curvesets[0],
     new compositebezier(motionparams[0][0][0]),
     new orientationscheme(motionparams[0][0][1]),
-    5
+    25
   )
 };
 
@@ -192,12 +193,12 @@ std::vector<motion> motionpaths = {
 
 //PID for base navigation
 PID bPID[] = {
-  PID(PIDKvals[0],PIDSvals[1],PIDLvals[1]), //direct distance PID
-  PID(PIDKvals[2],PIDSvals[0],PIDLvals[1]), //direct rotation PID
+  *new PID(PIDKvals[0],PIDSvals[1],PIDLvals[1]), //direct distance PID
+  *new PID(PIDKvals[2],PIDSvals[0],PIDLvals[1]), //direct rotation PID
   *new PID(PIDKvals[1],PIDSvals[0],PIDLvals[0]), //direct rotation PID for driver mode
-  PID(PIDKvals[3],PIDSvals[0],PIDLvals[0]), //heading offset PID
-  PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct X axis PID
-  PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct Y axis PID
+  *new PID(PIDKvals[3],PIDSvals[0],PIDLvals[0]), //heading offset PID
+  *new PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct X axis PID
+  *new PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct Y axis PID
 };
 
 //PID e = PID(PIDKvals[0],PIDSvals[0],PIDKvals[0],curvesets[0]); //example setup for a motorF
@@ -235,7 +236,7 @@ motorf NBmotors[] = {
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
-coordcontroller mover = *new coordcontroller(base,bPID);
+coordcontroller mover = *new coordcontroller(&base,bPID);
 intakecontroller intakes{Motor(6),Motor(7,true),Motor(8),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//

@@ -56,16 +56,26 @@ struct beziernp{
       	  coords = points; //fancy speed and heading configurations precomputed in motion to reduce load
           }
         //https://www.desmos.com/calculator/xlpbe9bgll
-        std::vector<double>* getvalF(double t){
-          std::vector<double>* xy = new std::vector<double>; //this can 100% cause memory problems if I screw up memory management b/c this whole structure is garbo. pay attention to it if we have any issues like that
-          xy->push_back(0);
-          xy->push_back(0);
+        void getvalFxyaT(double t){
+          double x = 0; double y = 0;
           for (int i = 0; i < size; i++){
             double ccfactor = getCCF(t,i);
-            (*xy)[0]+=ccfactor*coords[i][0];
-            (*xy)[1]+=ccfactor*coords[i][1];
+             x+=ccfactor*coords[i][0];
+             y+=ccfactor*coords[i][1];
           }
-          return xy;
+          x = xyaT[0]; //hardcode cuz I don't wanna deal with any more pointer issues
+          y = xyaT[1];
+        }
+
+        void getvalFtangentvals(double t){
+          double x = 0; double y = 0;
+          for (int i = 0; i < size; i++){
+            double ccfactor = getCCF(t,i);
+             x+=ccfactor*coords[i][0];
+             y+=ccfactor*coords[i][1];
+          }
+          x = tangentvals[0]; //hardcode cuz I don't wanna deal with any more pointer issues
+          y = tangentvals[1];
         }
         //formatting: t is iteration position, k is index, v is coordinate
         //Ptriangle is a set of precalculated binomial factors, up to degree 10
@@ -108,21 +118,17 @@ struct compositebezier{
               pslopes[xo][y] = pr[xo+1][y]-pr[xo][y]; //the slope of a bezier curve is another bezier curve where each point is the difference of each set of 2 points
             }
           }
-          genarr.push_back(*(new beziernp(params,4)));
-          tanarr.push_back(*(new beziernp(pslopes,3)));
+          genarr.push_back(*new beziernp(params,4));
+          tanarr.push_back(*new beziernp(pslopes,3));
         }
       };
       //safe, no deletion mode. In retrospect this is probably sufficient. Each beziernp is like 8 bytes so we shouldn't see any issues given that we have like 40MB of usable memory
       //percent input from 0-100, not 0.00-1.00
       void updvalnd(double pct){
     	  double ival = (pct/100)*genarr.size();
-        std::vector<double>* cd = genarr[(int)floor(ival)].getvalF(ival-floor(ival));
-        std::vector<double>* tancd = tanarr[(int)floor(ival)].getvalF(ival-floor(ival));
-        xyaT[0] = (*cd)[0];
-        xyaT[1] = (*cd)[1];
-        tgtangent = fmod(atan2((*tancd)[1],(*tancd)[0]),2*M_PI); //compute angle in radians to face to be tangent
-        delete cd; //not too sure if this is correct. We make a non temporary vector in getvalF, and then delete it here after we don't need it anymore
-        delete tancd;
+        genarr[(int)floor(ival)].getvalFxyaT(ival-floor(ival));
+        tanarr[(int)floor(ival)].getvalFtangentvals(ival-floor(ival));
+        tgtangent = fmod(atan2(tangentvals[1], tangentvals[0]),2*M_PI); //compute angle in radians to face to be tangent
       }
     };
 
@@ -182,10 +188,11 @@ struct motion{
   	}
   	bool computepath(){
       perc += iterationperfac;
-      return (perc > 100) ? true:false; //if percent > 100 return true
+      if (perc > 100) return true; //if percent > 100 return true
   		GVT = g->getval(perc); //update targeted velocity
   		cb->updvalnd(perc); //update target point
-  		ob->orientationset(perc); //update angle target and rotation mode
+  		//ob->orientationset(perc); //update angle target and rotation mode
+      return false;
     }
   };
 

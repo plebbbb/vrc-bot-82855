@@ -40,6 +40,7 @@ extern double yR;
 
 //Array of target x, y, current angle
 extern double xyaT[3]; //is making this an array a good idea or not tbh not sure
+extern double tangentvals[2];
 
 extern double tgtangent;
 
@@ -81,4 +82,4 @@ extern const int AXIS_COUNT;
 //global coordcontroller parameters
 //technically this is bad practice but at the same time going through all the layers to get to it is a painful thing
 extern bool anglemode; //enable/disable angle optimization
-extern bool GVT; //global velocity target
+extern double GVT; //global velocity target

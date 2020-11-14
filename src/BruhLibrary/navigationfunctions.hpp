@@ -63,7 +63,7 @@ struct coordcontroller{
   double distance;
   PID* axiscontrollers; //the initial plan called for 3 PID controllers to allow for smooth motion curves, but for now we have a direct line approach
   //double* xyaT; //we are gonna try a potentially stupid approach, where we dont call coordcontroller but instead change the tgt coords directly
-  coordcontroller(basecontroller a, PID b[]){mBase = &a; axiscontrollers = b;}
+  coordcontroller(basecontroller *a, PID b[]){mBase = a; axiscontrollers = b;}
   /*returns true when target is reached
     potential camera implementation: overload update with version that replaces r and perp with camera controls
     this overload would input the desired color profile that the camera is looking for.
@@ -151,13 +151,7 @@ struct coordcontroller{
           determinesmallestA(getrelrad(angleG,tgtangent),getrelrad(angleG,tgtangent+M_PI/2)),
           determinesmallestA(getrelrad(angleG,tgtangent+M_PI),getrelrad(angleG,tgtangent+(3*M_PI/2)))
       );
-      //Above: a potential optimization would be to get the average Tang of the new few segements and decide from that, to prevent cases of the bot pointlessly turning at the corner when that power could go to translating
       else rD = getrelrad(angleG,xyaT[2]); //rotationmode is held in fixed segements of the movement path and released near the target to the real final angle
-  /*    lcd::print(0,"Forward Angle Offset: %f", getrelrad(angleG,TGang));
-      lcd::print(1,"90deg CCW Angle Offset: %f", getrelrad(angleG,+M_PI/2));
-      lcd::print(2,"180deg Angle Offset: %f", getrelrad(angleG,TGang+M_PI));
-      lcd::print(3,"270deg CCW Angle Offset: %f", getrelrad(angleG,TGang+(3*M_PI/2)));
-      lcd::print(4,"Current Offset: %f", rD);*/
       if (isnanf(xCC)) xCC = 0; //honestly screw nan I would expect stuff to be so cheese that it defaults to a 0
       if (isnanf(yCC)) yCC = 0;
       if(isnanf(rD)) rD = 0;
@@ -165,16 +159,22 @@ struct coordcontroller{
         xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
         yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
         rD = axiscontrollers[1].update(-7.5*(rD));
-      }else{
+      }
+      else{
         xD = xCC*cos(getrelrad(angleG-M_PI/2,0))+yCC*cos(getrelrad(angleG,M_PI));
         yD = yCC*sin(getrelrad(angleG,M_PI))+xCC*sin(getrelrad(angleG-M_PI/2,0));
         rD = axiscontrollers[1].update(-20*(rD));
       }
-      mBase->vectormove(xD,yD,rD,GVT);
+      //double angleoverride = GVT*(rD/(rD+xD+yD));
+      //printf("xT: %f    yT: %f", xyaT[0],xyaT[1]);
+      //printf("tangent: %f   AOM: %d", tgtangent, anglemode);
+      //printf("xD: %f   yD: %f");
+      printf("TSP: %f\n", GVT);
+      mBase->vectormove(xD,yD,rD,10);
       //less than 2 inch distance to commit to next stage, angle only relevant if rotationmode disabled
       switch(anglemode){ //this is some janky ass logic but it should work
-        case 0: if (round(fabs(rD/(M_PI*2))*25) != 0) break; //if it is within angle tolerances pass through to case 1, only when we have a defined rotation target
-        case 1: if (round(dist/4) == 0) return true; //case if angle optimization is enabled, checks if bot within position tolerances
+        case 0: //if (round(fabs(rD/(M_PI*2))*25) != 0) break; //if it is within angle tolerances pass through to case 1, only when we have a defined rotation target
+        case 1: if (round(dist/16) == 0) return true; //case if angle optimization is enabled, checks if bot within position tolerances
       }
       return false;
     }
