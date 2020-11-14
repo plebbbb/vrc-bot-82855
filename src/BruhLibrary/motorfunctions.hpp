@@ -136,6 +136,43 @@ struct basecontroller{
   }
 };
 
+struct intakecontroller{
+  Motor left;
+  Motor right;
+  Motor bottomR;
+  Motor topR;
+  controller_digital_e_t Intake;
+  controller_digital_e_t Outtake;
+  //takes positive and negative values, pos for intake
+  void intake_velocity(double vel){
+    left.move_velocity(vel);
+    right.move_velocity(vel);
+  }
+  void input(){
+    switch((int)ctrl.get_digital(Intake)-int(ctrl.get_digital(Outtake))){
+      case -1: //outtake on, intake offset
+        left.move_velocity(-100);
+        right.move_velocity(-100);
+        topR.move_velocity(-100);
+        bottomR.move_velocity(-100);
+        return;
+      case 0: //both pressed or nothing pressed
+        left.move_velocity(0);
+        right.move_velocity(0);
+        topR.move_velocity(0);
+        bottomR.move_velocity(0);
+        return;
+      case 1: //intake on, outtake off
+        left.move_velocity(100);
+        right.move_velocity(100);
+        topR.move_velocity(100);
+        bottomR.move_velocity(100);
+        return;
+    }
+  }
+};
+
+
 //opcontrolcontroller: wrapper for basecontroller to be used during manual drive.
 //we may implement motorF features into it as the situation dictates
 /*to summerise the behavior of the config options:
@@ -162,19 +199,21 @@ struct opcontrolcontroller{
     bool* configuration; //config for code, indexes: 0 - absolute oridentaiton translation controls, 1 - angle lock control, 2 - 45 degree angle targeting, 3 - quadratic speed weighting toggle
     double tang;
     PID* rot;
-    opcontrolcontroller(basecontroller b, controller_analog_e_t* css, PID ro, bool* config){
-      ssc = &b; controls = css; ; rot = &ro; configuration = config; tang = angleG;}
+    double speed = 0;
+    opcontrolcontroller(basecontroller* b, controller_analog_e_t* css, PID* ro, bool* config){
+      ssc = b; controls = css; rot = ro; configuration = config; tang = angleG;}
     //tbd - deal with interia issues from rotation at high speeds, PID insta targets what happens when analog stick is 0
     void move(){
       double rs = -deadzonecompute(ctrl.get_analog(controls[2]));
-      logspeedcompute(ctrl.get_analog(controls[0]));
       if (rs != 0 && configuration[2]) configuration[2] = false;
-      rs = rot->update(angletgtcompute(rs));
+      rs = angletgtcompute(rs);
+      double rawspeed = determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rs);
+      speed = logspeedcompute(rawspeed);
       if (configuration[0]) relativemove(rs);
       else absolutemove(rs);
     }
     double determinespeed(double p1, double p2, double p3){
-      return (speedmultiplier/127)*determinebiggest( //div by speedmultiplier/127 to scale joystick values to percentage values
+      return (100.0/127.0)*determinebiggest( //div by speedmultiplier/127 to scale joystick values to percentage values
        fabs(p1),
        determinebiggest(
          fabs(p2),
@@ -183,8 +222,8 @@ struct opcontrolcontroller{
      );
     }
     double angletgtcompute(double e){ //returns the angle target based on the current mode
-      if (configuration[1]) return deadzonecompute(e);
-      if (configuration[2]) {return determinesmallestA(determinesmallestA(
+      if (configuration[2]) { //45 degree targeter overrides angle hold
+        double angleclosest = -2*determinesmallestA(determinesmallestA( //multiply for e
           determinesmallestA(getrelrad(angleG,0),getrelrad(angleG,M_PI/4)),
           determinesmallestA(getrelrad(angleG,M_PI/2),getrelrad(angleG,3*M_PI/4))
         ),
@@ -192,8 +231,13 @@ struct opcontrolcontroller{
             determinesmallestA(getrelrad(angleG,M_PI),getrelrad(angleG,5*M_PI/4)),
             determinesmallestA(getrelrad(angleG,3*M_PI/2),getrelrad(angleG,2*M_PI))
           )
-      );
+        );
+        return rot->update(angleclosest);
       }
+      if (configuration[1]) {
+        if (e != 0) {tang = angleG; return e;}
+        return rot->update(getrelrad(tang, angleG));
+      } //
       return e;
       //tbd: make a recursive version of this that takes entire functions, it'd be lowkey merge sort
       //or even better, just iterate a for loop over all values
@@ -204,7 +248,8 @@ struct opcontrolcontroller{
         (double)ctrl.get_analog(controls[0]),
         (double)ctrl.get_analog(controls[1]),
         rotation,
-        determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
+        //determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
+        speed
       );
     }
     //a reminder, this is hard offset pi/2 counterclockwise to account for angleG = pi/2 for the forwards direction
@@ -214,19 +259,20 @@ struct opcontrolcontroller{
         (double)(ctrl.get_analog(controls[0])*cos(getrelrad(angleG-M_PI/2,0))+ctrl.get_analog(controls[1])*cos(getrelrad(angleG,M_PI))),
         (double)(ctrl.get_analog(controls[1])*sin(getrelrad(angleG,M_PI))+ctrl.get_analog(controls[0])*sin(getrelrad(angleG-M_PI/2,0))),
         rotation,
-        determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rotation)
+        speed
       );
     //  lcd::print(6,"local x axis: %f", (ctrl.get_analog(controls[0])*cos(getrelrad(angleG-M_PI/2,0))+ctrl.get_analog(controls[1])*cos(getrelrad(angleG,M_PI))));
     //  lcd::print(7,"local y axis: %f", (ctrl.get_analog(controls[1])*sin(getrelrad(angleG,M_PI))+ctrl.get_analog(controls[0])*sin(getrelrad(angleG-M_PI/2,0))));
     }
     double deadzonecompute(double in){
-      if (in > 10) return in;
-      return 0;
+      if (fabs(in) > 10 && !isnanf(in)) return in;
+      return 0.00;
     }
     double logspeedcompute(double in){
-      speedmultiplier = pow(((10*in)/127),2);
+      return (0.01)*pow(in,2);
     }
   };
+
 
 struct MotorSys{
   double OPT; //filler variable to output sensor results

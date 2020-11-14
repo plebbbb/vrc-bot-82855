@@ -6,7 +6,7 @@
 //in inches or rads
 
 #define Y_AXIS_TWHEEL_OFFSET 6.95 //offset from center line of the y axis tracking wheel
-#define X_AXIS_TWHEEL_OFFSET 11.9 //offset from center lie of the x axis tracking wheel
+#define X_AXIS_TWHEEL_OFFSET 5.5 //offset from center lie of the x axis tracking wheel
 #define STD_WHEEL_RADIUS 1.625 //4in base wheels
 #define STD_TWHEEL_RADIUS 1.375 //2.75in wheel for left-right tracking wheels
 #define STD_BTWHEEL_RADIUS 2.00 //4in wheel used on back wheel for testing bot
@@ -69,7 +69,7 @@ extern int selectedauton;
 
 
 //opcontrol configuration
-extern controller_analog_e_t controlscheme[];
+//extern controller_analog_e_t controlscheme[];
 extern bool configoptions[];
 
 //Pascal's triangle

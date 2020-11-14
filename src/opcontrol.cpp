@@ -26,10 +26,13 @@ void opcontrol(){
     odo.posupdv2();
     //odometrycontrollerdebug();
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
-    //lcd::print(1,"%f",useonlyinopcontrol.ssc->MAP[0].cosV);
     //useonlyinopcontrol.relativemove(ctrl.get_analog(ANALOG_RIGHT_X));
+    //odometrycontrollerdebug();
+    intakes.input();
     useonlyinopcontrol.move();
     if (ctrl.get_digital_new_press(DIGITAL_B)) configoptions[0] = !configoptions[0];
+    if (ctrl.get_digital_new_press(DIGITAL_A)) configoptions[1] = !configoptions[1];
+    if (ctrl.get_digital_new_press(DIGITAL_Y)) configoptions[2] = !configoptions[2];
     delay(10);
   }; /*
 //below: test for autonomous

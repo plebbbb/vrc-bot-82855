@@ -9,9 +9,8 @@
 # PROS
 bin/
 .vscode/
-firmware/
-include/
-include/api.h
+firmware
+include
 compile_commands.json
 temp.log
 temp.errors

@@ -2,7 +2,7 @@
 void initialize() {
   lcd::initialize();
   delay(100);
-  autonselection();
+//  autonselection();
 }
 //void disabled() {}
 //void competition_initialize() {}

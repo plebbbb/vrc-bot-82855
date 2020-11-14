@@ -46,9 +46,9 @@ const std::vector<short> Ptriangle[] = { //short cuz we never go past even 200
 //ADIEncoder format: pin 1, pin2, inversed or not
 //Array format: Left, Right, Back
 ADIEncoder odencoders[3] = {
-  ADIEncoder('C','D',true),
-  ADIEncoder('B','A',false),
-  ADIEncoder('F','E',true)
+  ADIEncoder({1,'C','D'} ,true),
+  ADIEncoder({1,'B','A'},false),
+  ADIEncoder({1,'F','E'},true)
 };
 
 
@@ -62,8 +62,8 @@ motorw kiwimotors[] = {
 };
 
 motorw xdrivemotors[] = {
-  motorw(15,true,(3*M_PI)/4), //top right corner
-  motorw(16,true,(M_PI)/4), //bottom right corner
+  motorw(10,true,(3*M_PI)/4), //top right corner
+  motorw(20,true,(M_PI)/4), //bottom right corner
   motorw(17,true,(7*M_PI)/4), //bottom left corner
   motorw(19,true,(5*M_PI)/4), //top left corner
 };
@@ -194,7 +194,7 @@ std::vector<motion> motionpaths = {
 PID bPID[] = {
   PID(PIDKvals[0],PIDSvals[1],PIDLvals[1]), //direct distance PID
   PID(PIDKvals[2],PIDSvals[0],PIDLvals[1]), //direct rotation PID
-  PID(PIDKvals[1],PIDSvals[0],PIDLvals[0]), //direct rotation PID for driver mode
+  *new PID(PIDKvals[1],PIDSvals[0],PIDLvals[0]), //direct rotation PID for driver mode
   PID(PIDKvals[3],PIDSvals[0],PIDLvals[0]), //heading offset PID
   PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct X axis PID
   PID(PIDKvals[4],PIDSvals[0],PIDLvals[0]), //direct Y axis PID
@@ -204,7 +204,6 @@ PID bPID[] = {
 
 //********************************************************************************//
 
-//TBD: this entire section was commented out, figure out why
 //Control scheme configuration
 //array format: left-right, forwards-back, clockwise-counterclockwise
 controller_analog_e_t controlscheme[]{
@@ -217,7 +216,8 @@ controller_analog_e_t controlscheme[]{
 //array format: enable absolute mode, enable angle hold
 bool configoptions[]{
   false,
-  true
+  true,
+  false
 };
 
 //********************************************************************************//
@@ -233,13 +233,18 @@ motorf NBmotors[] = {
 //********************************************************************************//
 //actual controllers
 Controller ctrl = E_CONTROLLER_MASTER;
-odometrycontroller odo(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
-basecontroller base(xdrivemotors);
+odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
+basecontroller base = *new basecontroller(xdrivemotors);
 coordcontroller mover = *new coordcontroller(base,bPID);
-opcontrolcontroller useonlyinopcontrol(base,controlscheme,bPID[2],configoptions);
+intakecontroller intakes{Motor(6),Motor(7,true),Motor(8),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
+opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//
 //functions:
 double determinebiggest(double a, double b){
+  double TA = a;
+  double TB = b;
+  if (isnanf(TA)) TA = 0;
+  if (isnanf(TB)) TB = 0;
   if (a>b) return a;
   return b;
 }
@@ -281,7 +286,11 @@ double factorial(double n){
 
 //determine smallest functions
 double determinesmallest(double a, double b){
-  return (a > b) ? b : a;
+  double TA = a;
+  double TB = b;
+  if (isnanf(TA)) TA = 0;
+  if (isnanf(TB)) TB = 0;
+  return (TA > TB) ? TB : TA;
 }
 
 //determine smallest functions, absolute edition

@@ -35,6 +35,7 @@ extern motorf NBmotors[];
 extern basecontroller base;
 extern coordcontroller mover;
 extern opcontrolcontroller useonlyinopcontrol;
+extern intakecontroller intakes;
 //extern segementcontroller seg;
 //TBD: add all the other controllers
 

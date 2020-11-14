@@ -14,7 +14,7 @@ system
 //also, the old line testing code has been removed. See old commits for it, like pre october or something
 /********************************************************************************/
 void autonomous(){
-  double perc = 0;
+  /*double perc = 0;
   int arr = 0;
   while(true){
     odo.posupdv2();
@@ -22,5 +22,5 @@ void autonomous(){
       if (motionpaths[arr].computepath() && arr < motionpaths.size()) arr += 1;
     }
     delay(10); //refresh clock
-  }
+  }*/
 }
