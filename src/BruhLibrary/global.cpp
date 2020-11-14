@@ -158,6 +158,9 @@ const std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] 
         {M_PI/2+1,15,30},
         {M_PI,50,90},
         {2*M_PI,95,100}
+      },
+      {
+          {}
       }
     },
     { //Motion Set 2
@@ -170,6 +173,16 @@ const std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] 
         {M_PI/2+1,15,30},
         {M_PI,50,90},
         {2*M_PI,95,100}
+      }
+    }
+  },
+  {
+    {
+      {
+        {36, 60, M_PI, 1}
+      },
+      {
+        {-5, 0, -34, 3}
       }
     }
   }
