@@ -1,7 +1,7 @@
 #include "BruhLibrary/global.hpp"
 void initialize() {
-  //lcd::initialize();
-  //delay(100);
+  lcd::initialize();
+  delay(100);
 //  autonselection();
 }
 //void disabled() {}
