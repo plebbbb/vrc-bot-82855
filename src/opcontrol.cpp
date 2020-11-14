@@ -20,10 +20,12 @@ bool configoptions[]{
 
 //*******************************************************************************//
 //The actual code
+Imu a(11);
 void opcontrol(){
   //TBD: fix the pointers on these so they actually work - probably done see older revisions for all the old stuff needed to get it to work
   while(true){
-    odo.posupdv2();
+    angleG = fmod(a.get_heading()*(180/M_PI),2*M_PI);
+    //odo.posupdv2();
     //odometrycontrollerdebug();
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
     //useonlyinopcontrol.relativemove(ctrl.get_analog(ANALOG_RIGHT_X));

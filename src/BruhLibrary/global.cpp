@@ -217,7 +217,7 @@ controller_analog_e_t controlscheme[]{
 //array format: enable absolute mode, enable angle hold
 bool configoptions[]{
   false,
-  true,
+  false,
   false
 };
 
@@ -237,7 +237,7 @@ Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
 coordcontroller mover = *new coordcontroller(&base,bPID);
-intakecontroller intakes{Motor(6),Motor(7,true),Motor(8),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
+intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,false),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//
 //functions:
