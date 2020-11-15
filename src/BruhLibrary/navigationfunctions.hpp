@@ -98,6 +98,12 @@ struct coordcontroller{
     yCC = axiscontrollers[5].update(-yGD);
     if (isnanf(xCC)) xCC = 0;
     if (isnanf(yCC)) yCC = 0;
+    if(isnanf(rD)) rD = 0;
+    if (anglemode) rD = AOM_P_VAL*determinesmallestA(
+        determinesmallestA(getrelrad(angleG,tgtangent),getrelrad(angleG,tgtangent+M_PI/2)),
+        determinesmallestA(getrelrad(angleG,tgtangent+M_PI),getrelrad(angleG,tgtangent+(3*M_PI/2)))
+    );
+    else rD = getrelrad(angleG,xyaT[2]);
     if (dist < 2.5){ //trigger x-y specific PID on activation
       xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
       yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
@@ -113,7 +119,6 @@ struct coordcontroller{
     //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
     //xD+=yO*sin(atan2(xD,yD));
     //yD+=yO*cos(atan2(xD,yD));
-    if(isnanf(rD)) rD = 0;
     GLOBAL_PERC_COMPLETION = fabs(100*(dist/distance));
     double LPID = fabs(axiscontrollers[0].update(GLOBAL_PERC_COMPLETION)); //axiscontrollers is now on a percent basis
     if(isnanf(LPID)) LPID = 0; //this shouldnt have to exist, it only means that the PID is borked somewhere

@@ -14,14 +14,24 @@ system
 
 std::vector<linearmotion> linemoves{
   linearmotion(
-    15,
-    0
+    15, //x
+    0,  //y
     new orientationscheme(
-        *new std::vector<std::vector<double>>{M_PI,50,100}
-
-      );
+        *new std::vector<std::vector<double>>{
+          {M_PI,50,100},
+        }
+      )//orientaiton
+  ),
+  linearmotion(
+    15,
+    15,
+    new orientationscheme(
+        *new std::vector<std::vector<double>>{
+          {M_PI*3/4,0,25},
+        }
+      )
   )
-}
+};
 
 
 //note: old auton config info here has been depreciated. New auton commands in global.cpp, may decide to move it over.
@@ -29,6 +39,17 @@ std::vector<linearmotion> linemoves{
 /********************************************************************************/
 void autonomous(){
   int arr = 0;
+  while(true){
+    odo.posupdv2();
+    odometrycontrollerdebug();
+    linemoves[arr].updatesystems();
+    if(mover.update()){
+      arr++;
+      if(linemoves.size() == arr) arr--;
+      linemoves[arr].set_tgt();
+    }
+    delay(10);
+  }
 /*  motionpaths[arr].computepath();
   while(true){
     odo.posupdv2();

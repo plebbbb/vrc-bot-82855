@@ -148,7 +148,7 @@ class orientationscheme{
   public:
   	orientationscheme(std::vector<std::vector<double>> orientationset){
   		ind = orientationset.size()-1; //-1 as we iterate backwards so we start at the last index, size-1
-  		for (int i = ind-1; i > -1; i--){
+  		for (int i = ind; i > -1; i--){
   			orientationsys.push_back(
   				*new orientation(
   					orientationset[i][0], //direction
@@ -195,8 +195,29 @@ struct motion{
       return false;
     }
   };
-
-struct IntakeAutonSystem{
+/*
+struct intakecommandset{
+    bool triggered = false;
+    std::vector<std::vector<int>>* cmd; //format: 0: Intake amt, 1: Score amt, 2: start threshold, 3: end threshold
+    int index = 0;
+    intakecommandset(std::vector<std::vector<int>>* comm){cmd = comm;}
+    void intakeset(double perc){
+      if(cmd->at(index)[2] <= perc){
+        if(!triggered){
+        triggered = true;
+        intakecontrols.set_tgt(cmd->at(index)[0], cmd->at(index)[1]);
+        }else{
+          intakecontrols.operate
+        }
+      if(cmd->at(index)[3] > perc){
+        triggered = false;
+        index++;
+        }
+      }
+    }
+};
+*/
+/*struct IntakeAutonSystem{
   int IntakeV = 0;
   int ScoreV = 0;
   int IT = 0;
@@ -206,7 +227,7 @@ struct IntakeAutonSystem{
   ADIButton* score;
   ADIButton* intake;
   intakecontroller* in;
-  IntakeAutonSystem(intakecontroller i, ADIButton sc, ADIButton inc){in = &i; score = &sc; intake = &inc;}
+  IntakeAutonSystem(intakecontroller* ics, ADIButton* sc, ADIButton* inc){in = ics; score = sc; intake = inc;}
   void update(){
     if (score->get_new_press()) ScoreV++;
     if (intake->get_new_press()) IntakeV++;
@@ -253,46 +274,27 @@ struct IntakeAutonSystem{
     if (IT < 0 && intake->get_value() == true) IntakeV = -1;
   }
 };
-
-struct intakecommandset{
-  bool triggered = false;
-  std::vector<std::vector<int>>* cmd; //format: 0: Intake amt, 1: Score amt, 2: start threshold, 3: end threshold
-  int index = 0;
-  intakecommandset(std::vector<std::vector<int>>* comm){cmd = comm;}
-  void intakeset(double perc){
-    if(cmd->at(index)[2] <= perc){
-      if(!triggered){
-      triggered = true;
-      intakecontrols.set_tgt(cmd->at(index)[0], cmd->at(index)[1]);
-      }else{
-        intakecontrols.operate
-      }
-    if(cmd->at(index)[3] > perc){
-      triggered = false;
-      index++;
-    }
-  }
-};
-};
-
+*/
 struct linearmotion{
   double x, y;
   dualScurve* g;
   orientationscheme* ob;
-  intakecommandset* ef = NULL;
+//  intakecommandset* ef = NULL;
   linearmotion(double xa, double ya, orientationscheme* os){
     ob = os; x = xa; y = ya;
   }
-  linearmotion(double xa, double ya, orientationscheme* os, intakecommandset *e){
+/*  linearmotion(double xa, double ya, orientationscheme* os, intakecommandset *e){
     ob = os; x = xa; y = ya; ef = e;
-  }
+  }*/
   void set_tgt(){
+    GLOBAL_PERC_COMPLETION = 0;
     xyaT[0] = x;
     xyaT[1] = y;
+    tgtangent = fmod(atan2(xyaT[1],xyaT[0]),2*M_PI);
     ob->orientationset(GLOBAL_PERC_COMPLETION);
   }
   void updatesystems(){
-    if (ef != NULL) ef->intakeset(GLOBAL_PERC_COMPLETION);
+    //if (ef != NULL) ef->intakeset(GLOBAL_PERC_COMPLETION);
     ob->orientationset(GLOBAL_PERC_COMPLETION);
   }
 };

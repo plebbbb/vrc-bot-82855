@@ -22,6 +22,7 @@ double xyaT[3] = {0,0,angleG};
 double tangentvals[2] = {0};
 double tgtangent = angleG;
 bool anglemode;
+double GLOBAL_PERC_COMPLETION;
 double GVT = 0;
 const int AXIS_COUNT = 0;
 
@@ -238,7 +239,7 @@ const std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] 
         {-5, 0, -3, 3}
       }
     }
-  }
+  },
 
 // Test: Move up 2.5 squares, then spin 90 deg counterclockwise
   {
@@ -318,7 +319,7 @@ Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
 coordcontroller mover = *new coordcontroller(&base,bPID);
-intakecontroller intakes{Motor(6),Motor(7,true),Motor(8),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
+intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,false),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//
 //functions:

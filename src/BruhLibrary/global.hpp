@@ -36,7 +36,7 @@ extern basecontroller base;
 extern coordcontroller mover;
 extern opcontrolcontroller useonlyinopcontrol;
 extern intakecontroller intakes;
-extern IntakeAutonSystem intakecontrols;
+//extern IntakeAutonSystem intakecontrols;
 //extern segementcontroller seg;
 //TBD: add all the other controllers
 
