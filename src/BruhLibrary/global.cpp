@@ -176,16 +176,84 @@ const std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] 
       }
     }
   },
+
+  // Auton (currently about 60% of it below)
+  {
+    {
+      { // Translations
+        {36, 24, M_PI/2, 1}, // Intake on (2 balls possessed after this)
+        {24, 24, M_PI, 1},
+        {18, 18, M_PI*5/4, 1},
+        {16, 16, M_PI*5/4, 1}, // Shoot goal 1 (1 ball poss)
+        {72, 18, M_PI*3/2, 1},
+        {72, 16, M_PI*3/2, 1}, // Shoot goal 2 (0 balls)
+        {72, 33, M_PI/2, 1},
+        {72, 48, M_PI/2, 1}, // Intake on (1)
+        {96, 32, atan(2/3)*(-1), 1},
+        {117, 18, atan(2/3)*(-1), 1}, // Intake on for most of this (2)
+        {126, 18, M_PI*7/4, 1},
+        {128, 16, M_PI*7/4, 1}, // Shoot goal 3 (1)
+        {120, 57, M_PI/2, 1},
+        {120, 72, M_PI/2, 1}, // Intake (2)
+        {120, 72, 0, 1},
+        {126, 72, 0, 1}, // Shoot goal 4 (1)
+        {114, 104, atan(-8/3), 1},
+        {108, 120, atan(-8/3), 1}, // Intake (2)
+        {120, 120, M_PI/4, 1},
+        {128, 128, M_PI/4, 1}, // Shoot goal 5 (1)
+      },
+
+      { // Rotations which I don't know how to use yet
+        {-5, 0, -3, 3}, // Spacefiller so code works
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3}
+      }
+    }
+  },
+
+  // Test: Move up 2.5 squares and spin 90 deg counterclockwise
   {
     {
       {
         {36, 60, M_PI, 1}
       },
       {
-        {-5, 0, -34, 3}
+        {-5, 0, -3, 3}
       }
     }
   }
+
+// Test: Move up 2.5 squares, then spin 90 deg counterclockwise
+  {
+    {
+      {
+        {36, 60, M_PI/2, 1},
+        {36, 60, M_PI, 1}
+      },
+      {
+        {-5, 0, -3, 3},
+        {-5, 0, -3, 3}
+      }
+    }
+  }
+
 };
 
 
@@ -230,7 +298,7 @@ controller_analog_e_t controlscheme[]{
 //array format: enable absolute mode, enable angle hold
 bool configoptions[]{
   false,
-  false,
+  true,
   false
 };
 
@@ -250,9 +318,8 @@ Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
 coordcontroller mover = *new coordcontroller(&base,bPID);
-intakecontroller intakes = *new intakecontroller{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,false),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
+intakecontroller intakes{Motor(6),Motor(7,true),Motor(8),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
-IntakeAutonSystem intakecontrols = *new IntakeAutonSystem(intakes,ADIButton(1),ADIButton(1));
 //********************************************************************************//
 //functions:
 double determinebiggest(double a, double b){
