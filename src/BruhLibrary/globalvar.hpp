@@ -83,3 +83,4 @@ extern const int AXIS_COUNT;
 //technically this is bad practice but at the same time going through all the layers to get to it is a painful thing
 extern bool anglemode; //enable/disable angle optimization
 extern double GVT; //global velocity target
+extern double GLOBAL_PERC_COMPLETION; //global percentage completion of path, for linear auton

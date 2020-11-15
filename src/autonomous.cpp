@@ -12,8 +12,15 @@ system
 
 */
 
-std::vector<std::vector<double>> AutonSL{
-  {0,0,M_PI/2,}
+std::vector<linearmotion> linemoves{
+  linearmotion(
+    15,
+    0
+    new orientationscheme(
+        *new std::vector<std::vector<double>>{M_PI,50,100}
+
+      );
+  )
 }
 
 

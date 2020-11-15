@@ -144,7 +144,7 @@ struct intakecontroller{
   controller_digital_e_t Intake;
   controller_digital_e_t Outtake;
   //takes positive and negative values, pos for intake
-  void intake_velocity(double vel){
+  void intake_velocity(double vel, double velB, double velC){
     left.move_velocity(vel);
     right.move_velocity(vel);
   }

@@ -114,7 +114,8 @@ struct coordcontroller{
     //xD+=yO*sin(atan2(xD,yD));
     //yD+=yO*cos(atan2(xD,yD));
     if(isnanf(rD)) rD = 0;
-    double LPID = fabs(axiscontrollers[0].update(fabs(100*(dist/distance)))); //axiscontrollers is now on a percent basis
+    GLOBAL_PERC_COMPLETION = fabs(100*(dist/distance));
+    double LPID = fabs(axiscontrollers[0].update(GLOBAL_PERC_COMPLETION)); //axiscontrollers is now on a percent basis
     if(isnanf(LPID)) LPID = 0; //this shouldnt have to exist, it only means that the PID is borked somewhere
     //double LPID = fabs(axiscontrollers[0].update(dist));
     //double LPID = fabs(xCC) + fabs(yCC);
