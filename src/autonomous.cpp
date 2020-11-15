@@ -10,13 +10,19 @@ There really isn't an advantage to doing stuff like this, I just thought it look
 cool. In the 65% chance this approach is risky, we can switch to a function based
 system
 
+*/
+
+std::vector<std::vector<double>> AutonSL{
+  {0,0,M_PI/2,}
+}
+
+
 //note: old auton config info here has been depreciated. New auton commands in global.cpp, may decide to move it over.
 //also, the old line testing code has been removed. See old commits for it, like pre october or something
 /********************************************************************************/
 void autonomous(){
-/*  double perc = 0;
   int arr = 0;
-  motionpaths[arr].computepath();
+/*  motionpaths[arr].computepath();
   while(true){
     odo.posupdv2();
     odometrycontrollerdebug();
@@ -24,5 +30,7 @@ void autonomous(){
       if (motionpaths[arr].computepath() && arr < motionpaths.size()-1) arr += 1;
     }
     delay(10); //refresh clock
-  }*/
+  }
+  */
+
 }

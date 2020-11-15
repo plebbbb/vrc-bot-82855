@@ -63,8 +63,8 @@ struct beziernp{
              x+=ccfactor*coords[i][0];
              y+=ccfactor*coords[i][1];
           }
-          x = xyaT[0]; //hardcode cuz I don't wanna deal with any more pointer issues
-          y = xyaT[1];
+          xyaT[0] = x; //hardcode cuz I don't wanna deal with any more pointer issues
+          xyaT[1] = y;
         }
 
         void getvalFtangentvals(double t){
@@ -74,8 +74,8 @@ struct beziernp{
              x+=ccfactor*coords[i][0];
              y+=ccfactor*coords[i][1];
           }
-          x = tangentvals[0]; //hardcode cuz I don't wanna deal with any more pointer issues
-          y = tangentvals[1];
+          tangentvals[0] = x; //hardcode cuz I don't wanna deal with any more pointer issues
+          tangentvals[1] = y;
         }
         //formatting: t is iteration position, k is index, v is coordinate
         //Ptriangle is a set of precalculated binomial factors, up to degree 10
@@ -196,6 +196,18 @@ struct motion{
     }
   };
 
+
+struct linearmotion{
+  double iterationperfac;
+  double perc = 0;
+  double 
+  dualScurve* g;
+  compositebezier* cb;
+  orientationscheme* ob;
+  linearmotion(dualScurve *h, double[2] coord, orientationscheme *o, double c){
+    g = h; ob = o; iterationperfac = c;
+  }
+}
 /*PID: generic PID system*/
 //NOTE: DEFAULT TGT = 0
 struct PID{

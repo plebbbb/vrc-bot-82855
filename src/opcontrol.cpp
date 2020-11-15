@@ -24,13 +24,13 @@ Imu asdasd(11);
 void opcontrol(){
   //TBD: fix the pointers on these so they actually work - probably done see older revisions for all the old stuff needed to get it to work
   while(true){
-    angleG = fmod(((double)asdasd.get_heading()-90.00)*(180/M_PI),2*M_PI);
-    //odo.posupdv2();
+    //angleG = fmod(((double)asdasd.get_heading()-90.00)*(180/M_PI),2*M_PI);
+    odo.posupdv2();
     //odometrycontrollerdebug();
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
     //useonlyinopcontrol.relativemove(ctrl.get_analog(ANALOG_RIGHT_X));
     //odometrycontrollerdebug();
-    odometrycontrollerdebug();
+    //odometrycontrollerdebug();
     intakes.input();
     useonlyinopcontrol.move();
     //if (ctrl.get_digital_new_press(DIGITAL_B)) configoptions[0] = !configoptions[0];

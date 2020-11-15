@@ -169,12 +169,11 @@ struct coordcontroller{
       //printf("xT: %f    yT: %f", xyaT[0],xyaT[1]);
       //printf("tangent: %f   AOM: %d", tgtangent, anglemode);
       //printf("xD: %f   yD: %f");
-      printf("TSP: %f\n", GVT);
-      mBase->vectormove(xD,yD,rD,10);
+      mBase->vectormove(xD,yD,rD,GVT+10);
       //less than 2 inch distance to commit to next stage, angle only relevant if rotationmode disabled
       switch(anglemode){ //this is some janky ass logic but it should work
         case 0: //if (round(fabs(rD/(M_PI*2))*25) != 0) break; //if it is within angle tolerances pass through to case 1, only when we have a defined rotation target
-        case 1: if (round(dist/16) == 0) return true; //case if angle optimization is enabled, checks if bot within position tolerances
+        case 1: if (round(dist/4) == 0) return true; //case if angle optimization is enabled, checks if bot within position tolerances
       }
       return false;
     }
