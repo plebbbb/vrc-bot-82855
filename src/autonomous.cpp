@@ -14,13 +14,18 @@ system
 
 std::vector<linearmotion> linemoves{
   linearmotion(
-    15, //x
-    0,  //y
+    0, //x
+    10,  //y
     new orientationscheme(
         *new std::vector<std::vector<double>>{
-          {M_PI,50,100},
+          {M_PI,50,100}
         }
-      )//orientaiton
+      ),//orientaiton
+    new intakecommandset(new std::vector<std::vector<double>>{
+      {99,100,1000}
+    },
+    &intakes
+  )
   ),
   linearmotion(
     15,

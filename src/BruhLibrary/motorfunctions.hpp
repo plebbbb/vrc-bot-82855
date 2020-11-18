@@ -136,42 +136,6 @@ struct basecontroller{
   }
 };
 
-struct intakecontroller{
-  Motor left;
-  Motor right;
-  Motor bottomR;
-  Motor topR;
-  controller_digital_e_t Intake;
-  controller_digital_e_t Outtake;
-  //takes positive and negative values, pos for intake
-  void intake_velocity(double vel, double velB, double velC){
-    left.move_velocity(vel);
-    right.move_velocity(vel);
-  }
-  void input(){
-    switch((int)ctrl.get_digital(Intake)-int(ctrl.get_digital(Outtake))){
-      case -1: //outtake on, intake offset
-        left.move_velocity(-100);
-        right.move_velocity(-100);
-        topR.move_velocity(-100);
-        bottomR.move_velocity(-100);
-        return;
-      case 0: //both pressed or nothing pressed
-        left.move_velocity(0);
-        right.move_velocity(0);
-        topR.move_velocity(0);
-        bottomR.move_velocity(0);
-        return;
-      case 1: //intake on, outtake off
-        left.move_velocity(100);
-        right.move_velocity(100);
-        topR.move_velocity(100);
-        bottomR.move_velocity(100);
-        return;
-    }
-  }
-};
-
 
 //opcontrolcontroller: wrapper for basecontroller to be used during manual drive.
 //we may implement motorF features into it as the situation dictates

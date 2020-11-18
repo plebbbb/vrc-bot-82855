@@ -195,97 +195,81 @@ struct motion{
       return false;
     }
   };
-/*
+
+struct intakecontroller{
+    Motor left;
+    Motor right;
+    Motor bottomR;
+    Motor topR;
+    controller_digital_e_t Intake;
+    controller_digital_e_t Outtake;
+    //takes positive and negative values, pos for intake
+    void intake_velocity(double vel){
+      left.move_velocity(vel);
+      right.move_velocity(vel);
+      topR.move_velocity(vel);
+      bottomR.move_velocity(vel);
+    }
+    void input(){
+      switch((int)ctrl.get_digital(Intake)-int(ctrl.get_digital(Outtake))){
+        case -1: //outtake on, intake offset
+          left.move_velocity(-100);
+          right.move_velocity(-100);
+          topR.move_velocity(-100);
+          bottomR.move_velocity(-100);
+          return;
+        case 0: //both pressed or nothing pressed
+          left.move_velocity(0);
+          right.move_velocity(0);
+          topR.move_velocity(0);
+          bottomR.move_velocity(0);
+          return;
+        case 1: //intake on, outtake off
+          left.move_velocity(100);
+          right.move_velocity(100);
+          topR.move_velocity(100);
+          bottomR.move_velocity(100);
+          return;
+      }
+    }
+};
+
+
+
 struct intakecommandset{
-    bool triggered = false;
-    std::vector<std::vector<int>>* cmd; //format: 0: Intake amt, 1: Score amt, 2: start threshold, 3: end threshold
+    intakecontroller* intakez;
+    std::vector<std::vector<int>>* cmd; //format: 0: start interval, 1: end interval, 2: timeout in units of 10ms per 1
     int index = 0;
-    intakecommandset(std::vector<std::vector<int>>* comm){cmd = comm;}
+    int ticker = 0;
+    intakecommandset(std::vector<std::vector<double>>* comm, intakecontroller* intake){cmd = comm; intakez = intake;}
     void intakeset(double perc){
-      if(cmd->at(index)[2] <= perc){
-        if(!triggered){
-        triggered = true;
-        intakecontrols.set_tgt(cmd->at(index)[0], cmd->at(index)[1]);
-        }else{
-          intakecontrols.operate
-        }
-      if(cmd->at(index)[3] > perc){
-        triggered = false;
+      if (index == cmd->size()) {
+        intakez->intake_velocity(0);
+        return;
+      }
+      if(cmd->at(index)[1] > perc || ticker == cmd->at(index)[2]){
+        ticker = 0;
+        intakez->intake_velocity(0);
         index++;
         }
+      if(cmd->at(index)[0] <= perc){
+        intakez->intake_velocity(100);
+        ticker++;
       }
     }
 };
-*/
-/*struct IntakeAutonSystem{
-  int IntakeV = 0;
-  int ScoreV = 0;
-  int IT = 0;
-  int ST = 0;
-  int ticker = 0;
-  int tickerb = 0;
-  ADIButton* score;
-  ADIButton* intake;
-  intakecontroller* in;
-  IntakeAutonSystem(intakecontroller* ics, ADIButton* sc, ADIButton* inc){in = ics; score = sc; intake = inc;}
-  void update(){
-    if (score->get_new_press()) ScoreV++;
-    if (intake->get_new_press()) IntakeV++;
-  }
-  void clear(){
-    IntakeV = 0;
-    ScoreV = 0;
-    IT = 0;
-    ST = 0;
-    ticker = 0;
-    if (score->get_value() == true) ScoreV = 1;
-  }
-  bool operate(){
-    int IV = 0;
-    int RBV = 0;
-    int SRV = 0;
-    if(fabs(IntakeV) < fabs(IT)) {
-      if(IntakeV > 0){
-        IV = -127; RBV = -127; SRV = -127;
-        if(fabs(IntakeV-IT) <= 2) SRV = 0; //if less than 2 balls needed to be ejected we can stop top wheel
-      }
-      else{
-        IV = 127; RBV = 127;
-        if(ScoreV < 1) SRV = 127;
-      }
-    }
-    else if(IntakeV > 0 && tickerb < 50){
-      IV = -127; RBV = -127; ticker++; //half a second after buttonc ontact to get ball fully out
-    }
-    if(ScoreV < ST){
-      RBV = 127;
-      SRV = 127;
-    } else if (ticker < 50){
-      SRV = 127;
-      ticker++; //50 ticker iterations is 10ms*50 = half a second extra to get that last ball out
-    }
-    in->intake_velocity(IV, RBV, SRV);
-    if(IV == 0 && RBV == 0 && SRV == 0) {clear(); return true;} //everything is done
-    return false; //still need to cycle
-  }
-  void set_tgt(int intae, int scoe){
-    clear();
-    IT = intae, ST = scoe;
-    if (IT < 0 && intake->get_value() == true) IntakeV = -1;
-  }
-};
-*/
+
 struct linearmotion{
   double x, y;
   dualScurve* g;
   orientationscheme* ob;
-//  intakecommandset* ef = NULL;
+  intakecommandset* ef = NULL;
   linearmotion(double xa, double ya, orientationscheme* os){
     ob = os; x = xa; y = ya;
   }
-/*  linearmotion(double xa, double ya, orientationscheme* os, intakecommandset *e){
+  linearmotion(double xa, double ya, orientationscheme* os, intakecommandset *e){
     ob = os; x = xa; y = ya; ef = e;
-  }*/
+  }
   void set_tgt(){
     GLOBAL_PERC_COMPLETION = 0;
     xyaT[0] = x;
@@ -294,7 +278,7 @@ struct linearmotion{
     ob->orientationset(GLOBAL_PERC_COMPLETION);
   }
   void updatesystems(){
-    //if (ef != NULL) ef->intakeset(GLOBAL_PERC_COMPLETION);
+    if (ef != NULL) ef->intakeset(GLOBAL_PERC_COMPLETION);
     ob->orientationset(GLOBAL_PERC_COMPLETION);
   }
 };

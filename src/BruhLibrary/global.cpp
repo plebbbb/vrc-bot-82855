@@ -319,7 +319,7 @@ Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
 coordcontroller mover = *new coordcontroller(&base,bPID);
-intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,false),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
+intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//
 //functions:
@@ -411,9 +411,9 @@ lcd::print(1,"Right Encoder: %d", (a.right->get_value()));
 lcd::print(2,"Back Encoder: %d", (a.back->get_value()));
 }*/
 void odometrycontrollerdebug(){
-lcd::print(0,"X: %f",xG);
-lcd::print(1,"Y: %f", yG);
-lcd::print(2,"Angle: %f", angleG);
+lcd::print(0,"X: %f, Target: %f",xG, xyaT[0]);
+lcd::print(1,"Y: %f, Target: %f", yG, xyaT[1]);
+lcd::print(2,"Angle: %f, Target: %f", angleG, xyaT[2]);
 //lcd::print(3,"Est Spd: %d in/s", (int)estspd);
 //lcd::print(4, "Est Heading: %f", heading);
 }

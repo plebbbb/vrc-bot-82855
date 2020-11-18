@@ -5,6 +5,7 @@ using namespace pros;
 #include "globalvar.hpp"
 #include "pid.hpp"
 #include "motorfunctions.hpp"
+#include "pid.hpp"
 #include "navigationfunctions.hpp"
 //#include "userinterface.hpp"
 /*
