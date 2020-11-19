@@ -23,21 +23,21 @@ bool configoptions[]{
 //Imu asdasd(11);
 void opcontrol(){
   //TBD: fix the pointers on these so they actually work - probably done see older revisions for all the old stuff needed to get it to work
-  autonomous();
+  // autonomous();
   while(true){
-    //intakes.intake_velocity(100*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),100*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
+    intakes.intake_velocity(100*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),100*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
     //angleG = fmod(((double)asdasd.get_heading()-90.00)*(180/M_PI),2*M_PI);
-  /*  odo.posupdv2();
+    odo.posupdv2();
     odometrycontrollerdebug();
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
     //useonlyinopcontrol.relativemove(ctrl.get_analog(ANALOG_RIGHT_X));
     //odometrycontrollerdebug();
-    intakes.input();
+    // intakes.input();
     useonlyinopcontrol.move();
     if (ctrl.get_digital_new_press(DIGITAL_B)) configoptions[0] = !configoptions[0];
     if (ctrl.get_digital_new_press(DIGITAL_A)) configoptions[1] = !configoptions[1];
     if (ctrl.get_digital_new_press(DIGITAL_Y)) configoptions[2] = !configoptions[2];
-    delay(10);*/
+    delay(10);
   }; /*
 //below: test for autonomous
   while(true){
