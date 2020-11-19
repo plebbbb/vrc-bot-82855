@@ -158,19 +158,20 @@ class orientationscheme{
   		}
   	}
   	//below: percent from 0-100, not 0.00-1.00
-  	void orientationset(double percent){
+  	bool orientationset(double percent){
   		if(ind < 0){
   			anglemode = true; //enables automatic angle optimization if no more orientationsys targets left
-  			return;
   		}
+      else return true; //if out of orientations that means we are done
   		//above: test first to prevent array out of bound error below if no index 0
   		if(orientationsys[ind].AT <= percent){ //disable automatic angle optimization and set angle target
   			anglemode = false;
   			xyaT[2] = orientationsys[ind].DR;
   		} else anglemode = true;
-  		if (orientationsys[ind].DAT <= percent){ //delete the current orientation object once it passes threshold
+  		if (orientationsys[ind].DAT < percent){ //delete the current orientation object once it passes threshold
   			ind--;								    //            and reenable angle optimization
   		}
+      return false;
   	}
   };
 
@@ -204,11 +205,11 @@ struct intakecontroller{
     controller_digital_e_t Intake;
     controller_digital_e_t Outtake;
     //takes positive and negative values, pos for intake
-    void intake_velocity(double vel){
-      left.move_velocity(vel);
-      right.move_velocity(vel);
-      topR.move_velocity(vel);
-      bottomR.move_velocity(vel);
+    void intake_velocity(double velIN, double velOUT){
+      left.move_velocity(velIN);
+      right.move_velocity(velIN);
+      topR.move_velocity(velOUT);
+      bottomR.move_velocity(velOUT);
     }
     void input(){
       switch((int)ctrl.get_digital(Intake)-int(ctrl.get_digital(Outtake))){
@@ -238,24 +239,31 @@ struct intakecontroller{
 
 struct intakecommandset{
     intakecontroller* intakez;
-    std::vector<std::vector<int>>* cmd; //format: 0: start interval, 1: end interval, 2: timeout in units of 10ms per 1
-    int index = 0;
-    int ticker = 0;
-    intakecommandset(std::vector<std::vector<double>>* comm, intakecontroller* intake){cmd = comm; intakez = intake;}
-    void intakeset(double perc){
-      if (index == cmd->size()) {
-        intakez->intake_velocity(0);
-        return;
+    std::vector<std::vector<double>>* cmd; //format: 0: intake speed, 1: score speed,  2: start interval, 3: end interval, 4: timeout in units of 10ms per 1
+    int index;
+    int ticker;
+    intakecommandset(std::vector<std::vector<double>>* comm, intakecontroller* intake){cmd = comm; intakez = intake; index = 0; ticker = 0;}
+    bool intakeset(double perc){
+      if (index >= cmd->size()) {
+        intakez->intake_velocity(0,0);
+        return true;
       }
-      if(cmd->at(index)[1] > perc || ticker == cmd->at(index)[2]){
+      lcd::print(3,"Index: %d", index);
+      lcd::print(4,"IN SPD: %f", cmd->at(index)[0]);
+      lcd::print(5,"OUT SPD: %f", cmd->at(index)[1]);
+      lcd::print(6,"threshold: %d,  ticker: %d", (int)cmd->at(index)[4],ticker);
+      if(cmd->at(index)[3] > perc || ticker == (int)(cmd->at(index)[4])){
         ticker = 0;
-        intakez->intake_velocity(0);
+        intakez->intake_velocity(0,0);
         index++;
-        }
-      if(cmd->at(index)[0] <= perc){
-        intakez->intake_velocity(100);
-        ticker++;
+        return false;
       }
+      if(cmd->at(index)[2] <= perc){
+        intakez->intake_velocity(cmd->at(index)[0],cmd->at(index)[1]);
+        ticker++;
+        return false;
+      }
+      return false;
     }
 };
 
@@ -277,9 +285,11 @@ struct linearmotion{
     tgtangent = fmod(atan2(xyaT[1],xyaT[0]),2*M_PI);
     ob->orientationset(GLOBAL_PERC_COMPLETION);
   }
-  void updatesystems(){
-    if (ef != NULL) ef->intakeset(GLOBAL_PERC_COMPLETION);
-    ob->orientationset(GLOBAL_PERC_COMPLETION);
+  bool updatesystems(){
+    bool c = true;
+    if (ef != NULL) c*=ef->intakeset(GLOBAL_PERC_COMPLETION);
+    c*=ob->orientationset(GLOBAL_PERC_COMPLETION);
+    return c;
   }
 };
 /*PID: generic PID system*/

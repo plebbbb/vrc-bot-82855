@@ -59,7 +59,6 @@ struct odometrycontroller{
 //TBD: refactor coordcontroller into multiple processing functions per update function. It is bloaty, at least the independent line update function.
 struct coordcontroller{
   basecontroller* mBase;
-  double oldxyat[3] = {0,0,0};
   double distance;
   PID* axiscontrollers; //the initial plan called for 3 PID controllers to allow for smooth motion curves, but for now we have a direct line approach
   //double* xyaT; //we are gonna try a potentially stupid approach, where we dont call coordcontroller but instead change the tgt coords directly
@@ -78,14 +77,11 @@ struct coordcontroller{
     double dist = sqrt(xGD*xGD+yGD*yGD);
     //the whole idea of this is to figure out what direction we moved in so we can auto orient ourselves in the most efficient direction.
     //the current implementation uses instanious rates of change to do this, meaning that if we dont move things get messed up by divison by zero.
-    if (!isarrsame(xyaT, oldxyat, 3)) {
+    if (GLOBAL_PERC_COMPLETION == 0.00) {
       distance = dist;
       double sl = determinesmallest(100, 0.75*distance+20); //linear formula for s curve speed limit, def not realistic but its close enough
       axiscontrollers[0].Scurve->a.vars[0] = sl;
       axiscontrollers[0].Scurve->b.vars[0] = sl; //could be jank if there isnt a different downward S curve
-      //shouldnt be a problem tho cuz I dont think we ever deal with that case. this is here if u get memory errors
-      //for(int i = 0; i < 3; i++){oldxyat[i] = xyaT[i];}
-      arraycopy(oldxyat, xyaT, 3); //TEST TO SEE IF THIS ACTUALLY WORKS NOW
     }
     double xD = 0;
     double yD = 0;
@@ -96,8 +92,8 @@ struct coordcontroller{
     //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
     xCC = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
     yCC = axiscontrollers[5].update(-yGD);
-    if (isnanf(xCC)) xCC = 0;
-    if (isnanf(yCC)) yCC = 0;
+    if (isnanf(xCC) || isinff(xCC)) xCC = 0;
+    if (isnanf(yCC) || isinff(yCC)) yCC = 0;
     if(isnanf(rD)) rD = 0;
     if (anglemode) rD = AOM_P_VAL*determinesmallestA(
         determinesmallestA(getrelrad(angleG,tgtangent),getrelrad(angleG,tgtangent+M_PI/2)),
@@ -109,8 +105,8 @@ struct coordcontroller{
       yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
       rD = axiscontrollers[1].update(-7.5*(getrelrad(angleG,xyaT[2])));
     }else{
-      xD = xCC*cos(getrelrad(angleG-M_PI/2,0))+yCC*cos(getrelrad(angleG,M_PI));
-      yD = yCC*sin(getrelrad(angleG,M_PI))+xCC*sin(getrelrad(angleG-M_PI/2,0));
+      xD = 0.5*xCC*cos(getrelrad(angleG-M_PI/2,0))+0.5*yCC*cos(getrelrad(angleG,M_PI));
+      yD = 0.5*yCC*sin(getrelrad(angleG,M_PI))+0.5*xCC*sin(getrelrad(angleG-M_PI/2,0));
       rD = axiscontrollers[1].update(-20*(getrelrad(angleG,xyaT[2])));
     }
 
@@ -119,16 +115,18 @@ struct coordcontroller{
     //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
     //xD+=yO*sin(atan2(xD,yD));
     //yD+=yO*cos(atan2(xD,yD));
-    GLOBAL_PERC_COMPLETION = fabs(100*(dist/distance));
-    double LPID = fabs(axiscontrollers[0].update(GLOBAL_PERC_COMPLETION)); //axiscontrollers is now on a percent basis
-    if(isnanf(LPID)) LPID = 0; //this shouldnt have to exist, it only means that the PID is borked somewhere
-    //double LPID = fabs(axiscontrollers[0].update(dist));
+    GLOBAL_PERC_COMPLETION = fabs(100.0*(dist/distance));
+    if (isnanf(GLOBAL_PERC_COMPLETION) || isinff(GLOBAL_PERC_COMPLETION)) GLOBAL_PERC_COMPLETION = 100; //fix divison by zero if distance = 0
+    //double LPID = fabs(axiscontrollers[0].update(GLOBAL_PERC_COMPLETION)); //axiscontrollers is now on a percent basis
+    double LPID = fabs(axiscontrollers[0].update(dist));
+    LPID*=(bool)round(LPID*4);//if under 0.125 dist kill LPID
+    if(isnanf(LPID)|| isinff(LPID)) LPID = 0; //this shouldnt have to exist, it only means that the PID is borked somewhere
     //double LPID = fabs(xCC) + fabs(yCC);
-    double RPID = determinesmallest(fabs(rD),25);
+    double RPID = determinesmallest(fabs(rD),10);
     double speed = determinesmallest(70, LPID+RPID);
-/*    lcd::print(1,"S curve cap:%f",axiscontrollers[0].Scurve->b->vars[0]);
-    lcd::print(3,"Speed: %f",speed);
-    lcd::print(4,"percent tgt: %f", 100*(dist/distance));
+//   lcd::print(1,"S curve cap:%f",axiscontrollers[0].Scurve->b->vars[0]);
+  //  lcd::print(3,"Speed: %f",speed);
+  /*  lcd::print(4,"percent tgt: %f", 100*(dist/distance));
     lcd::print(5,"linear PID: %f", LPID);
     lcd::print(6,"rotational PID: %f", RPID);*/
     mBase->vectormove(xD,yD,rD,speed);

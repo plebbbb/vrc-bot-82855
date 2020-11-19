@@ -15,19 +15,21 @@ system
 std::vector<linearmotion> linemoves{
   linearmotion(
     0, //x
-    10,  //y
+    0,  //y
     new orientationscheme(
         *new std::vector<std::vector<double>>{
-          {M_PI,50,100}
+          {M_PI/2,50,100}
         }
-      ),//orientaiton
-    new intakecommandset(new std::vector<std::vector<double>>{
-      {99,100,1000}
+      ),
+    new intakecommandset(
+      new std::vector<std::vector<double>>{
+      {100,100,24,101,100},
+      {0,100,0,101,100}
     },
     &intakes
-  )
+    )
   ),
-  linearmotion(
+  /*linearmotion(b
     15,
     15,
     new orientationscheme(
@@ -35,25 +37,32 @@ std::vector<linearmotion> linemoves{
           {M_PI*3/4,0,25},
         }
       )
-  )
+  )*/
 };
+bool flag = false;
+void globalclock(){
+  flag = !flag;
+  delay(5); //10sec to invert itself back to right state\
 
-
+}
+std::uint32_t oldtime = 0;
 //note: old auton config info here has been depreciated. New auton commands in global.cpp, may decide to move it over.
 //also, the old line testing code has been removed. See old commits for it, like pre october or something
 /********************************************************************************/
 void autonomous(){
   int arr = 0;
+  linemoves[arr].set_tgt();
   while(true){
     odo.posupdv2();
-    odometrycontrollerdebug();
-    linemoves[arr].updatesystems();
-    if(mover.update()){
+  //  odometrycontrollerdebug();
+    if(mover.update() && linemoves[arr].updatesystems()){
       arr++;
       if(linemoves.size() == arr) arr--;
       linemoves[arr].set_tgt();
     }
-    delay(10);
+    std::uint32_t time = pros::millis();
+    pros::Task::delay_until(&time,10);
+    //delay(10);
   }
 /*  motionpaths[arr].computepath();
   while(true){
