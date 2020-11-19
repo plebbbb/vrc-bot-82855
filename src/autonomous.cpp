@@ -23,8 +23,8 @@ std::vector<linearmotion> linemoves{
       ),
     new intakecommandset(
       new std::vector<std::vector<double>>{
-      {100,100,24,101,100},
-      {0,100,0,101,100}
+      {100,100,24,100,100},
+      {0,100,0,100,100}
     },
     &intakes
     )
@@ -60,6 +60,7 @@ void autonomous(){
       if(linemoves.size() == arr) arr--;
       linemoves[arr].set_tgt();
     }
+    lcd::clear();
     std::uint32_t time = pros::millis();
     pros::Task::delay_until(&time,10);
     //delay(10);

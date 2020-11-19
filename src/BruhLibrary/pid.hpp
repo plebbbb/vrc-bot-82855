@@ -252,13 +252,13 @@ struct intakecommandset{
       lcd::print(4,"IN SPD: %f", cmd->at(index)[0]);
       lcd::print(5,"OUT SPD: %f", cmd->at(index)[1]);
       lcd::print(6,"threshold: %d,  ticker: %d", (int)cmd->at(index)[4],ticker);
-      if(cmd->at(index)[3] > perc || ticker == (int)(cmd->at(index)[4])){
+      if(cmd->at(index)[3] < perc || ticker == (int)(cmd->at(index)[4])){
         ticker = 0;
         intakez->intake_velocity(0,0);
         index++;
         return false;
       }
-      if(cmd->at(index)[2] <= perc){
+      if(cmd->at(index)[2] >= perc){
         intakez->intake_velocity(cmd->at(index)[0],cmd->at(index)[1]);
         ticker++;
         return false;
