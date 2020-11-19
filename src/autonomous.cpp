@@ -55,7 +55,7 @@ void autonomous(){
   while(true){
     odo.posupdv2();
   //  odometrycontrollerdebug();
-    if(mover.update() && linemoves[arr].updatesystems()){
+    if(linemoves[arr].updatesystems() && mover.update()){
       arr++;
       if(linemoves.size() == arr) arr--;
       linemoves[arr].set_tgt();
