@@ -25,7 +25,7 @@ void opcontrol(){
   //TBD: fix the pointers on these so they actually work - probably done see older revisions for all the old stuff needed to get it to work
   // autonomous();
   while(true){
-    intakes.intake_velocity(100*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),100*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
+    intakes.intake_velocity(200*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),200*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
     //angleG = fmod(((double)asdasd.get_heading()-90.00)*(180/M_PI),2*M_PI);
     odo.posupdv2();
     odometrycontrollerdebug();

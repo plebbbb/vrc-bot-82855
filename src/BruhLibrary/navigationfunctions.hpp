@@ -90,8 +90,8 @@ struct coordcontroller{
     double rD = 0; //VERY janky figure out better solution than a hard multiplier
     //we switch modes into an axis specific PID mode once we get close to prevent circular movement
     //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
-    xCC = axiscontrollers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
-    yCC = axiscontrollers[5].update(-yGD);
+    xCC = axiscontrollers[4].update(-xGD*cos(angleG) + -yGD*sin(angleG)); //neg b/c PID responds to offset to target, not other way around
+    yCC = axiscontrollers[5].update(-yGD*cos(angleG) + -xGD*sin(angleG));
     if (isnanf(xCC) || isinff(xCC)) xCC = 0;
     if (isnanf(yCC) || isinff(yCC)) yCC = 0;
     if(isnanf(rD)) rD = 0;

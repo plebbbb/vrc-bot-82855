@@ -15,30 +15,34 @@ system
 std::vector<linearmotion> linemoves{
   linearmotion(
     0, //x
-    0,  //y
+    72,  //y
     new orientationscheme(
         *new std::vector<std::vector<double>>{
-          {M_PI/2,50,100}
+          {M_PI/2, 0, 100}
         }
       ),
     new intakecommandset(
       new std::vector<std::vector<double>>{
-      {100,100,24,100,100},
-      {0,100,0,100,100}
+      {100,100,99,100,300}
     },
     &intakes
     )
   ),
-
-  /*linearmotion(b
-    15,
-    15,
+  linearmotion(
+    0, //x
+    72,  //y
     new orientationscheme(
         *new std::vector<std::vector<double>>{
-          {M_PI*3/4,0,25},
+          {M_PI/2, 0, 100}
         }
-      )
-  )*/
+      ),
+    new intakecommandset(
+      new std::vector<std::vector<double>>{
+      {100,0,0,100,500}
+    },
+    &intakes
+    )
+  ),
 };
 bool flag = false;
 void globalclock(){
