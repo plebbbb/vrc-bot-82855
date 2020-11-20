@@ -268,10 +268,16 @@ struct intakecommandset{
 };
 
 struct linearmotion{
-  double x, y;
+  double x, y, tang;
   dualScurve* g;
-  orientationscheme* ob;
+  orientationscheme* ob = NULL;
   intakecommandset* ef = NULL;
+  linearmotion(double xa, double ya, double tng){
+    tang = tng; x = xa; y = ya;
+  }
+  linearmotion(double xa, double ya, double tng, intakecommandset *e){
+    tang = tng; x = xa; y = ya; ef = e;
+  }
   linearmotion(double xa, double ya, orientationscheme* os){
     ob = os; x = xa; y = ya;
   }
@@ -283,12 +289,13 @@ struct linearmotion{
     xyaT[0] = x;
     xyaT[1] = y;
     tgtangent = fmod(atan2(xyaT[1],xyaT[0]),2*M_PI);
-    ob->orientationset(GLOBAL_PERC_COMPLETION);
+    if (ob != NULL) ob->orientationset(GLOBAL_PERC_COMPLETION);
+    else xyaT[2] = tang;
   }
   bool updatesystems(){
     bool c = true;
     if (ef != NULL) c*=ef->intakeset(GLOBAL_PERC_COMPLETION);
-    c*=ob->orientationset(GLOBAL_PERC_COMPLETION);
+    if (ob != NULL) c*=ob->orientationset(GLOBAL_PERC_COMPLETION);
     return c;
   }
 };
@@ -317,11 +324,11 @@ struct PID{
   dualScurve* Scurve;
 
   //the max limits for the loop
-  double maxIlimit;
-  double maxlimit;
+  double maxIlimit = 0;
+  double maxlimit = 0;
 
   //P, I, D, position, and target array
-  double PIDa[4] = {0};
+  double PIDa[4] = {0,0,0,0};
 
   double lasterror = 0;
 //public:

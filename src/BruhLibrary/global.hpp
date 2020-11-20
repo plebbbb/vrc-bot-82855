@@ -23,7 +23,7 @@ TO BE DONES:
 //********************************************************************************//
 
 //Scurve instances
-extern dualScurve* curvesets[];
+extern dualScurve curvesets[];
 
 //PID template instances
 extern PID bPID[];
@@ -34,7 +34,7 @@ extern motorw kiwimotors[];
 extern motorw xdrivemotors[];
 extern motorf NBmotors[];
 extern basecontroller base;
-extern coordcontroller mover;
+extern coordcontrollerV2 mover;
 extern opcontrolcontroller useonlyinopcontrol;
 extern intakecontroller intakes;
 //extern IntakeAutonSystem intakecontrols;
