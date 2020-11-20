@@ -75,12 +75,21 @@ motorw xdrivemotors[] = {
 
 //********************************************************************************//
 //PIDKvals format: Pk, Ik, Dk
+/*double PIDKvals[][3] = {
+  {10,0,10},     //direct distance PID
+  {5,0,1},        //direct rotation PID for driver mode
+  {5,0,0},       //direct rotation PID
+  {2,0.05,1},       //heading offset PID
+  {10,0,6},          //direct X/Y axis PID
+};*/
+
+//below: V1.273 version
 double PIDKvals[][3] = {
   {1,0,0.1},     //direct distance PID
-  {5,1.5,3},        //direct rotation PID for driver mode
-  {4,0,0.25},       //direct rotation PID
-  {2,0.05,1},       //heading offset PID
-  {3,0,1.5},          //direct X/Y axis PID
+  {5,0,3},        //direct rotation PID for driver mode
+  {5,0,0.25},       //direct rotation PID
+  {2,0.00,1},       //heading offset PID
+  {8,0,9},          //direct X/Y axis PID
 };
 
 //FOR REFRENCE: below is V1.215, where we had decent direct PID performance in line operation mode
@@ -91,7 +100,7 @@ double PIDKvals[][3] = {
   {3,0,2},       //direct rotation PID
   {2,0.05,1},       //heading offset PID
   {3,0,1},          //direct X/Y axis PID
-}*/
+};*/
 //********************************************************************************//
 /*PIDKvals format:
 S-curve enable/disable, - turns the P output into an S curve. it's quite rough but does give us a smoother motion. works only for percentage based PID loops
@@ -122,8 +131,8 @@ double Scurvevals[][4] = {
 };
 
 //dualScurve wrapper, use Scurvevals to dictate curve types
-dualScurve* curvesets[] = {
-  new dualScurve(Scurvevals[0],Scurvevals[1]) //default desmos link, flipped past 50%
+dualScurve curvesets[] = {
+  *new dualScurve(Scurvevals[0],Scurvevals[1]) //default desmos link, flipped past 50%
 };
 
 
@@ -260,14 +269,6 @@ const std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] 
 
 //set of motion instances for actual auton processing
 //input scheme: dualScurve*, compositebezier*/new compositebezier, orientationscheme*/new orientaitionscheme, iteration percentage factor
-std::vector<motion> motionpaths = {
-  *new motion( //Motion set 1
-    curvesets[0],
-    new compositebezier(motionparams[0][0][0]),
-    new orientationscheme(motionparams[0][0][1]),
-    25
-  )
-};
 
 //********************************************************************************//
 //PID controllers
@@ -275,7 +276,7 @@ std::vector<motion> motionpaths = {
 
 //PID for base navigation
 PID bPID[] = {
-  *new PID(PIDKvals[0],PIDSvals[1],PIDLvals[1]), //direct distance PID
+  *new PID(PIDKvals[0],PIDSvals[1],PIDLvals[1], curvesets[0]), //direct distance PID
   *new PID(PIDKvals[2],PIDSvals[0],PIDLvals[1]), //direct rotation PID
   *new PID(PIDKvals[1],PIDSvals[0],PIDLvals[0]), //direct rotation PID for driver mode
   *new PID(PIDKvals[3],PIDSvals[0],PIDLvals[0]), //heading offset PID
@@ -298,8 +299,8 @@ controller_analog_e_t controlscheme[]{
 //Control scheme featureset
 //array format: enable absolute mode, enable angle hold
 bool configoptions[]{
-  false,
   true,
+  false,
   false
 };
 
@@ -318,7 +319,7 @@ motorf NBmotors[] = {
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
-coordcontroller mover = *new coordcontroller(&base,bPID);
+coordcontrollerV2 mover = *new coordcontrollerV2{&base,bPID};
 intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//

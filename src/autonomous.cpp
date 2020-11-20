@@ -12,44 +12,66 @@ system
 
 */
 
-std::vector<linearmotion> linemoves{
-  linearmotion(
-    0, //x
-    72,  //y
-    new orientationscheme(
-        *new std::vector<std::vector<double>>{
-          {M_PI/2, 0, 100}
-        }
-      ),
+std::vector<linearmotion> twentyseven{
+  *new linearmotion(
+    0, 72, M_PI/2, // x, y, angle
     new intakecommandset(
       new std::vector<std::vector<double>>{
       {100,100,99,100,300}
-    },
-    &intakes
-    )
+    }, &intakes)
   ),
-  linearmotion(
-    0, //x
-    72,  //y
-    new orientationscheme(
-        *new std::vector<std::vector<double>>{
-          {M_PI/2, 0, 100}
-        }
-      ),
-    new intakecommandset(
-      new std::vector<std::vector<double>>{
-      {100,0,0,100,500}
-    },
-    &intakes
-    )
-  ),
-};
-bool flag = false;
-void globalclock(){
-  flag = !flag;
-  delay(5); //10sec to invert itself back to right state\
 
-}
+  *new linearmotion(
+    0, 72, M_PI/2,
+    new intakecommandset(new std::vector<std::vector<double>> {
+      {100, 0, 0, 100, 500}
+    }, &intakes)
+  )
+};
+
+
+std::vector<linearmotion> linemoves = {
+  *new linearmotion(0, 24, M_PI/2)
+};
+
+std::vector<linearmotion> circularpath = {
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(36, 24, M_PI*3/2),
+  *new linearmotion(72, 24, 0.0),
+  *new linearmotion(72, 60, 0.0),
+  *new linearmotion(36, 96, M_PI/2),
+  *new linearmotion(0, 96, 0.0),
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(36, 24, M_PI*3/2),
+  *new linearmotion(72, 24, 0.0),
+  *new linearmotion(72, 60, 0.0),
+  *new linearmotion(36, 96, M_PI/2),
+  *new linearmotion(0, 96, 0.0),
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(36, 24, M_PI*3/2),
+  *new linearmotion(72, 24, 0.0),
+  *new linearmotion(72, 60, 0.0),
+  *new linearmotion(36, 96, M_PI/2),
+  *new linearmotion(0, 96, 0.0),
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(36, 24, M_PI*3/2),
+  *new linearmotion(72, 24, 0.0),
+  *new linearmotion(72, 60, 0.0),
+  *new linearmotion(36, 96, M_PI/2),
+  *new linearmotion(0, 96, 0.0),
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(0, 24, M_PI),
+  *new linearmotion(36, 24, M_PI*3/2),
+  *new linearmotion(72, 24, 0.0),
+  *new linearmotion(72, 60, 0.0),
+  *new linearmotion(36, 96, M_PI/2),
+  *new linearmotion(0, 96, 0.0),
+  *new linearmotion(0, 24, M_PI)
+};
+
 std::uint32_t oldtime = 0;
 //note: old auton config info here has been depreciated. New auton commands in global.cpp, may decide to move it over.
 //also, the old line testing code has been removed. See old commits for it, like pre october or something
@@ -59,13 +81,12 @@ void autonomous(){
   linemoves[arr].set_tgt();
   while(true){
     odo.posupdv2();
-  //  odometrycontrollerdebug();
+    odometrycontrollerdebug();
     if(linemoves[arr].updatesystems() && mover.update()){
       arr++;
       if(linemoves.size() == arr) arr--;
       linemoves[arr].set_tgt();
     }
-    lcd::clear();
     std::uint32_t time = pros::millis();
     pros::Task::delay_until(&time,10);
     //delay(10);
