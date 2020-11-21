@@ -125,6 +125,7 @@ struct basecontroller{
     if (y != 0) y = y/xyspeedlimit; //y scale conversion
     //rotationalratio = 1;
     //above: very sketchy power distrubtion formula between rotation and translation
+    lcd::print(8,"%f * %f", rotationalratio, spd);
     for (int i = 0; i < sizeof(MAP); i++){
       //vals[i] = (spd*(((x*MAP[i].cosV + y*MAP[i].sinV)*(1-rotationalratio)) + rotationalratio));
       //calculation for the power of each motor, see discord #design-ideas for formula

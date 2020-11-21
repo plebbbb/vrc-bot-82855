@@ -30,9 +30,10 @@ std::vector<linearmotion> twentyseven{
 };
 */
 std::vector<linearmotion> linemoves = {
-  linearmotion(0, 24, M_PI/2),
-  linearmotion(0.00 , 24 , 0.00),
-  linearmotion(0,0,0.00)
+  linearmotion(0.00, 10.00, 0.00),
+  linearmotion(0, 10.00, 1.5*M_PI),
+  linearmotion(0,0,1.5*M_PI)
+
 };
 
 /*

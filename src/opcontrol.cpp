@@ -29,8 +29,11 @@ void opcontrol(){
     delay(5);
   }
   while(true){
-    intakes.intake_velocity(200*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),200*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
-    //angleG = fmod(((double)asdasd.get_heading()-90.00)*(180/M_PI),2*M_PI);
+//    intakes.intake_velocity(200*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),200*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
+//    double newang = fmod(fmod(degtorad(-inertial.get_heading()),M_PI*2)+ M_PI/2,M_PI*2);
+//    odo.posupdvIMU(newang-angleG);
+//    lcd::clear();
+    odometrycontrollerdebug();
     double angleG = fmod(fmod(degtorad(-inertial.get_heading()),M_PI*2)+ M_PI/2,M_PI*2);
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
     //useonlyinopcontrol.relativemove(ctrl.get_analog(ANALOG_RIGHT_X));

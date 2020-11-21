@@ -48,9 +48,9 @@ const std::vector<short> Ptriangle[] = { //short cuz we never go past even 200
 //ADIEncoder format: pin 1, pin2, inversed or not
 //Array format: Left, Right, Back
 ADIEncoder odencoders[3] = {
-  ADIEncoder({1,'C','D'} ,true),
-  ADIEncoder({1,'B','A'},false),
-  ADIEncoder({1,'F','E'},true)
+  ADIEncoder({21,'C','D'} ,true),
+  ADIEncoder({21,'B','A'},false),
+  ADIEncoder({21,'F','E'},true)
 };
 
 
@@ -75,23 +75,24 @@ motorw xdrivemotors[] = {
 
 //********************************************************************************//
 //PIDKvals format: Pk, Ik, Dk
-/*double PIDKvals[][3] = {
+double PIDKvals[][3] = {
   {10,0,10},     //direct distance PID
   {5,0,1},        //direct rotation PID for driver mode
-  {5,0,0},       //direct rotation PID
+  {1,0,0},       //direct rotation PID
   {2,0.05,1},       //heading offset PID
-  {10,0,6},          //direct X/Y axis PID
-};*/
+  {1,0,6},          //direct X/Y axis PID
+};
 
 //below: V1.273 version
+/*
 double PIDKvals[][3] = {
   {1,0.00,0.1},     //direct distance PID
   {5,0.00,3},        //direct rotation PID for driver mode
-  {5,0.00,0.25},       //direct rotation PID
+  {15,0.00,0.25},       //direct rotation PID
   {2,0.00,1},       //heading offset PID
   {8,0.00,9},          //direct X/Y axis PID
 };
-
+*/
 Imu inertial(15);
 
 //FOR REFRENCE: below is V1.215, where we had decent direct PID performance in line operation mode
@@ -277,7 +278,7 @@ const std::vector<std::vector<std::vector<std::vector<double>>>> motionparams[] 
 
 //PID for base navigation
 PID bPID[] = {
-  *new PID(PIDKvals[0],PIDSvals[1],PIDLvals[1], curvesets[0]), //direct distance PID
+  *new PID(PIDKvals[0],PIDSvals[1],PIDLvals[1]), //direct distance PID
   *new PID(PIDKvals[2],PIDSvals[0],PIDLvals[1]), //direct rotation PID
   *new PID(PIDKvals[1],PIDSvals[0],PIDLvals[0]), //direct rotation PID for driver mode
   *new PID(PIDKvals[3],PIDSvals[0],PIDLvals[0]), //heading offset PID
@@ -320,7 +321,7 @@ motorf NBmotors[] = {
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
-coordcontrollerV2 mover{&base, bPID};
+coordcontrollerv3 mover{&base};
 intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//
@@ -333,6 +334,12 @@ double determinebiggest(double a, double b){
   if (a>b) return a;
   return b;
 }
+
+double determinebiggestA(double a, double b){
+  if (determinebiggest(fabs(a),fabs(b)) == fabs(b)) return b;
+  return a;
+}
+
 
 double isposorneg(double input){
   //there is 100% a better solution but this works so imma keep it for now

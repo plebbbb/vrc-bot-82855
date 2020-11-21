@@ -201,11 +201,11 @@ struct coordcontroller{
   };
 
 //shit tier rewrite for emergency use
-struct coordcontrollerV2{
+struct coordcontrollerv2{
   basecontroller* BASE;
   PID* controllers;
   double distF = 0;
-  coordcontrollerV2(basecontroller* MP, PID* ctrl){BASE = MP; controllers = ctrl;}
+  coordcontrollerv2(basecontroller* MP, PID* ctrl){BASE = MP; controllers = ctrl;}
   bool update(){
     double xGD = (xG - xyaT[0]); //relative to global axis
     double yGD = (yG - xyaT[1]);
@@ -215,21 +215,22 @@ struct coordcontrollerV2{
     if (isnanf(rD)) rD = 0; //where is our division by zero at?
   //  double xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative to local axis
     //double yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0));
-    double xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
-    double yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
-    double XP = controllers[4].update(xD);
-    double YP = controllers[5].update(yD);
-  //  double RP = 0;
-    double RP = -rD;
+    double updXval = controllers[4].update(xGD); //neg b/c PID responds to offset to target, not other way around
+    double updYval = controllers[5].update(yGD);
+    double XP = updXval*cos(getrelrad(angleG-M_PI/2,0))+updYval*cos(getrelrad(angleG,M_PI));
+    double YP = updYval*sin(getrelrad(angleG,M_PI))+updXval*sin(getrelrad(angleG-M_PI/2,0));
+//    rD = controllers[1].update(-20*(getrelrad(angleG,xyaT[2])));
+    double RP = 0;
+  //  double RP = rD;
     if(isnanf(RP)) RP = 0;
-    double SP = determinesmallest(15, fabs(XP) + fabs(YP) + fabs(RP));
+    double SP = determinesmallest(35, fabs(XP) + fabs(YP) + fabs(RP));
     lcd::print(4,"%f", rD);
     lcd::print(5,"%f %f", RP, SP);
-    BASE->vectormove(XP, YP, RP, SP);
     if(xGD*xGD + yGD*yGD <= 1){ //within radius 1in circle from point
-      //BASE->vectormove(0,0,RP,SP);
       if (fabs(rD) <= 0.025) return true; //aprox 1.6 degree margin
+      return false;
     }
+    BASE->vectormove(XP, YP, RP, SP);
     return false;
   }
   bool computeglobalstate(double dist){
@@ -237,63 +238,25 @@ struct coordcontrollerV2{
     GLOBAL_PERC_COMPLETION = fabs(100.0*(dist/distF));
     if (isnanf(GLOBAL_PERC_COMPLETION) || isinff(GLOBAL_PERC_COMPLETION)) GLOBAL_PERC_COMPLETION = 100;
   }
-  bool updateOLD(){
-      //double yO = 0;
-      //note that it isnt really nescessary, but made to minimize the risk of swaying in circles, it itself is disabled
-      //past a certain point for safety's sake, although it is likely isn't gonna do anything weird when we get close to the target
-      double xGD = (xyaT[0]-xG); //global x distance
-      double yGD = (xyaT[1]-yG); //global y distance
-      double dist = sqrt(xGD*xGD+yGD*yGD);
-      if (GLOBAL_PERC_COMPLETION == 0) {
-        double sl = determinesmallest(100, 0.65*dist+20); //linear formula for s curve speed limit
-        controllers[0].Scurve->a.vars[0] = sl;
-        controllers[0].Scurve->b.vars[0] = sl;
-      }
-      computeglobalstate(dist);
-      double xD = 0;
-      double yD = 0;
-      double rD = 0; //VERY janky figure out better solution than a hard multiplier
-      //we switch modes into a direct axis specific PID mode once we get close to prevent circular movement
-      //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
-      double LPID = 0;
-      if (dist > 2.5){ //trigger x-y specific PID on activation
-        xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
-        yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
-        rD = controllers[1].update(-7.5*(getrelrad(angleG,xyaT[2])));
-        LPID = fabs(controllers[0].update(GLOBAL_PERC_COMPLETION)); //controllers is now on a percent basis
-      }else{
-        xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI));
-        yD = xGD*sin(getrelrad(angleG,M_PI))+ yGD*sin(getrelrad(angleG-M_PI/2,0));
-        rD = controllers[1].update(-20*(getrelrad(angleG,xyaT[2])));
-        if (isnanf(xD)) xD = 0;
-        if (isnanf(yD)) yD = 0;
-        if(isnanf(rD)) rD = 0;
-        xD = controllers[4].update(-xD);
-        yD = controllers[5].update(-yD);
-        LPID = fabs(xD) + fabs(yD);
-      }
+};
 
-      //if ((sqrt(pow(xD,2)+pow(yD,2))) > 10) yO = controllers[3].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
-      //PID offset system if the motors aren't 100% correct orientation wise. May cause potential spinning issues near target
-      //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
-      //xD+=yO*sin(atan2(xD,yD));
-      //yD+=yO*cos(atan2(xD,yD));
-      if(isnanf(rD)) rD = 0;
-      LPID = fabs(controllers[0].update(GLOBAL_PERC_COMPLETION)); //controllers is now on a percent basis
-      if(isnanf(LPID)) LPID = 0; //this shouldnt have to exist, it only means that the PID is borked somewhere
-      //double LPID = fabs(controllers[0].update(dist));
-      //double LPID = fabs(xCC) + fabs(yCC);
-      double RPID = determinesmallest(fabs(rD),25);
-      double speed = determinesmallest(70, LPID+RPID);
-    /*  lcd::print(1,"S curve cap:%f",controllers[0].Scurve->b.vars[0]);
-      lcd::print(3,"Speed: %f",speed);
-      lcd::print(4,"percent tgt: %f", 100*(dist/distF));
-      lcd::print(5,"linear PID: %f", LPID);
-      lcd::print(6,"rotational PID: %f", RPID);*/
-      BASE->vectormove(xD,yD,rD,speed);
-          //less than 4 inch distance, and less than 4% angle offset to commit to next stage
-      if (round(dist/8 + fabs(rD/M_PI)*25) == 0) return true;
-      if (speed <= 1.5) return true;
-      return false;
+struct coordcontrollerv3{
+  basecontroller* BASE;
+  double PLOOPP =10;
+  bool update(){
+    double xGD = (xyaT[0]-xG);
+    double yGD = (xyaT[1]-yG);
+    double rGA = 70*getrelrad(angleG, xyaT[2]);
+    if (isnanf(rGA) || isinff(rGA)) rGA = 0;
+    double xFS = 10*(xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)));
+    if (fabs(xFS) > 50) xFS = isposorneg(xFS)*50;
+    double yFS = 10*(yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)));
+    if (fabs(yFS) > 50) yFS = isposorneg(yFS)*50;
+    double spd = determinebiggestA(xFS, yFS) + rGA;
+    BASE->vectormove(xFS,yFS,rGA, spd);
+    if (xGD*xGD + yGD*yGD <= 4){
+      if (rGA <= 5) return true;
     }
+    return false;
+  }
 };

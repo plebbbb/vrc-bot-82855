@@ -44,3 +44,5 @@ extern bool isarrsame(double a[], double b[], int size);
 
 //auton selector
 extern void autonselection();
+
+extern double determinebiggestA(double a, double b);

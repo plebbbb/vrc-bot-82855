@@ -5,7 +5,7 @@
 /*GLOBAL DEFINITIONS*/
 //in inches or rads
 
-#define Y_AXIS_TWHEEL_OFFSET 7.02 //offset from center line of the y axis tracking wheel
+#define Y_AXIS_TWHEEL_OFFSET 6.95 //offset from center line of the y axis tracking wheel
 #define X_AXIS_TWHEEL_OFFSET -6.5 //offset from center lie of the x axis tracking wheel
 #define STD_WHEEL_RADIUS 1.625 //4in base wheels
 #define STD_TWHEEL_RADIUS 1.375 //2.75in wheel for left-right tracking wheels
