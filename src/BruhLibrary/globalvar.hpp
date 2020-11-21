@@ -5,11 +5,12 @@
 /*GLOBAL DEFINITIONS*/
 //in inches or rads
 
-#define Y_AXIS_TWHEEL_OFFSET 6.95 //offset from center line of the y axis tracking wheel
-#define X_AXIS_TWHEEL_OFFSET -6.5 //offset from center lie of the x axis tracking wheel
+#define Y_AXIS_TWHEEL_OFFSET_L -7.031597 //offset from center line of the y axis tracking wheel
+#define X_AXIS_TWHEEL_OFFSET_R -6
+#define X_AXIS_TWHEEL_OFFSET -6.485 //offset from center lie of the x axis tracking wheel
 #define STD_WHEEL_RADIUS 1.625 //4in base wheels
 #define STD_TWHEEL_RADIUS 1.375 //2.75in wheel for left-right tracking wheels
-#define STD_BTWHEEL_RADIUS 2.00 //4in wheel used on back wheel for testing bot
+#define STD_BTWHEEL_RADIUS 1.375 //proper 2.75
 #define BASE_MOTOR_RPM 200 //base motor rpm
 #define U_TGT_THRESHOLD 1000 //trigger threshold in mv for intake pot
 #define AOM_P_VAL 2 //angle optimization control loop P multiplier

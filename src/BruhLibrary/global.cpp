@@ -48,7 +48,7 @@ const std::vector<short> Ptriangle[] = { //short cuz we never go past even 200
 //ADIEncoder format: pin 1, pin2, inversed or not
 //Array format: Left, Right, Back
 ADIEncoder odencoders[3] = {
-  ADIEncoder({21,'C','D'} ,true),
+  ADIEncoder({21,'C','D'} ,false),
   ADIEncoder({21,'B','A'},false),
   ADIEncoder({21,'F','E'},true)
 };
@@ -319,7 +319,7 @@ motorf NBmotors[] = {
 //********************************************************************************//
 //actual controllers
 Controller ctrl = E_CONTROLLER_MASTER;
-odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
+odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET_L,Y_AXIS_TWHEEL_OFFSET_R,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
 coordcontrollerv3 mover{&base};
 intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake

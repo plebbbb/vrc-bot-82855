@@ -57,7 +57,7 @@ struct odometrycontroller{
     double HD = rottodist(degtorad(back->get_value()),STD_BTWHEEL_RADIUS);
     if (rang == 0){
       xLN = HD;
-      yLN = RD;
+      yLN = LD;
     }
     else {
       yLN = 2*sin(rang/2)*(LD/rang + ds);
