@@ -48,7 +48,7 @@ const std::vector<short> Ptriangle[] = { //short cuz we never go past even 200
 //ADIEncoder format: pin 1, pin2, inversed or not
 //Array format: Left, Right, Back
 ADIEncoder odencoders[3] = {
-  ADIEncoder({21,'C','D'} ,false),
+  ADIEncoder({21,'C','D'} ,true),
   ADIEncoder({21,'B','A'},false),
   ADIEncoder({21,'F','E'},true)
 };
@@ -78,9 +78,9 @@ motorw xdrivemotors[] = {
 double PIDKvals[][3] = {
   {10,0,10},     //direct distance PID
   {5,0,1},        //direct rotation PID for driver mode
-  {1,0,0},       //direct rotation PID
+  {10,0,0},       //direct rotation PID
   {2,0.05,1},       //heading offset PID
-  {1,0,6},          //direct X/Y axis PID
+  {10,0,6},          //direct X/Y axis PID
 };
 
 //below: V1.273 version
@@ -319,9 +319,9 @@ motorf NBmotors[] = {
 //********************************************************************************//
 //actual controllers
 Controller ctrl = E_CONTROLLER_MASTER;
-odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET_L,Y_AXIS_TWHEEL_OFFSET_R,X_AXIS_TWHEEL_OFFSET);
+odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET_L,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
-coordcontrollerv3 mover{&base};
+coordcontrollerv2 mover{&base, bPID};
 intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//

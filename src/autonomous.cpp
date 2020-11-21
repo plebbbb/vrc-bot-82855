@@ -88,7 +88,7 @@ void autonomous(){
   linemoves[arr].set_tgt();
   while(true){
     double newang = fmod(fmod(degtorad(-inertial.get_heading()),M_PI*2)+ M_PI/2,M_PI*2);
-    odo.posupdvIMU(newang-angleG);
+    odo.posupdv2();
 //    lcd::clear();
     odometrycontrollerdebug();
     if(/*linemoves[arr].updatesystems() &&*/ mover.update()){

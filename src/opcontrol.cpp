@@ -28,13 +28,13 @@ void opcontrol(){
   while(inertial.is_calibrating()){
     delay(5);
   }
+  int Oang = M_PI/2;
   while(true){
 //    intakes.intake_velocity(200*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),200*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
-    double newang = fmod(fmod(degtorad(-inertial.get_heading()),M_PI*2)+ M_PI/2,M_PI*2);
-    odo.posupdvIMU(newang-angleG);
+      angleG = getrelrad(fmod(fmod(degtorad(inertial.get_heading()),M_PI*2)+M_PI/2,M_PI*2), angleG);
+  //  odo.posupdv2();
   //  lcd::clear();
     odometrycontrollerdebug();
-  //  angleG =fmod(fmod(degtorad(inertial.get_heading()),M_PI*2)+M_PI/2,M_PI*2);
     lcd::print(6,"%d",odo.PLV);
     lcd::print(7,"%d",odo.PBV);
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);

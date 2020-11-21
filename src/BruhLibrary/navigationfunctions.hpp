@@ -54,7 +54,8 @@ struct odometrycontroller{
     PBV+=back->get_value();
     double LD = rottodist(degtorad(left->get_value()),STD_TWHEEL_RADIUS);
     double RD = rottodist(degtorad(right->get_value()),STD_TWHEEL_RADIUS);
-    double HD = rottodist(degtorad(back->get_value()),STD_BTWHEEL_RADIUS);
+    //double HD = rottodist(degtorad(back->get_value()),STD_BTWHEEL_RADIUS);
+    double HD = 0;
     if (rang == 0){
       xLN = HD;
       yLN = LD;
@@ -63,19 +64,17 @@ struct odometrycontroller{
       yLN = 2*sin(rang/2)*(LD/rang + ds);
       xLN = 2*sin(rang/2)*(HD/rang + db);
     }
-    double avang = angleG+(rang/2);
-    double xC = yLN*cos(avang)+xLN*cos(avang-(M_PI/2)); //conversion to global coords
-    double yC = yLN*sin(avang)+xLN*sin(avang-(M_PI/2));
+    double avang = angleG+rang;
+    double GL = xLN*xLN + yLN*yLN;
+    double xC = GL*cos(avang);
+    double yC = GL*sin(avang);
+  //  double xC = yLN*cos(avang)+xLN*cos(avang-(M_PI/2)); //conversion to global coords
+  //  double yC = yLN*sin(avang)+xLN*sin(avang-(M_PI/2));
     xG+=xC;
     yG+=yC;
     angleG+=rang;
     if (angleG > (M_PI*2)) angleG = angleG - (M_PI*2);
     if (angleG < 0) angleG = angleG + (M_PI*2);
-    estspd = sqrt(xLN*xLN + yLN*yLN)*100; //x100 to convert to in/s from in/10ms
-    if (xC != 0) heading = fmod(atan2(yC,xC),(2*M_PI));
-    else if (yC > 0) heading = M_PI/2; //if moving directly up
-    else if (yC < 0) heading = (3*M_PI)/2; //if moving directly down
-    else heading = 0; //if not moving
     left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
     right->reset();
     back->reset();
@@ -88,6 +87,26 @@ struct odometrycontroller{
     xG = x;
     yG = y;
     angleG = r;
+  }
+
+  void posupdv3(double rang){
+    double xL = 0;
+    double yL = 0;
+    double RD = rottodist(degtorad(right->get_value()),STD_TWHEEL_RADIUS);
+    double HD = rottodist(degtorad(back->get_value()),STD_BTWHEEL_RADIUS);
+    double RRAD = (RD/rang) + Y_AXIS_TWHEEL_OFFSET_L;
+    double HRAD = (HD/rang) + X_AXIS_TWHEEL_OFFSET;
+    if (rang == 0){
+      xL = HD;
+      yL = RD;
+    }
+    else{
+      yL = 2*sin(rang/2) * RRAD;
+      xL = 2*sin(rang/2) * HRAD;
+    }
+    double GD = sqrtf(xL*xL + yL*yL);
+    xG += GD*cos(angleG);
+    yG += GD*sin(angleG);
   }
 };
 
@@ -219,11 +238,11 @@ struct coordcontrollerv2{
     double updYval = controllers[5].update(yGD);
     double XP = updXval*cos(getrelrad(angleG-M_PI/2,0))+updYval*cos(getrelrad(angleG,M_PI));
     double YP = updYval*sin(getrelrad(angleG,M_PI))+updXval*sin(getrelrad(angleG-M_PI/2,0));
-//    rD = controllers[1].update(-20*(getrelrad(angleG,xyaT[2])));
-    double RP = 0;
-  //  double RP = rD;
+    rD = controllers[1].update(-(getrelrad(angleG,xyaT[2])));
+    //double RP = 0;
+    double RP = rD;
     if(isnanf(RP)) RP = 0;
-    double SP = determinesmallest(35, fabs(XP) + fabs(YP) + fabs(RP));
+    double SP = determinesmallest(70, fabs(XP) + fabs(YP) + fabs(RP));
     lcd::print(4,"%f", rD);
     lcd::print(5,"%f %f", RP, SP);
     if(xGD*xGD + yGD*yGD <= 1){ //within radius 1in circle from point

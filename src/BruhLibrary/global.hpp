@@ -34,7 +34,7 @@ extern motorw kiwimotors[];
 extern motorw xdrivemotors[];
 extern motorf NBmotors[];
 extern basecontroller base;
-extern coordcontrollerv3 mover;
+extern coordcontrollerv2 mover;
 extern opcontrolcontroller useonlyinopcontrol;
 extern intakecontroller intakes;
 //extern IntakeAutonSystem intakecontrols;
