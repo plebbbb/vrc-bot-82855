@@ -33,7 +33,7 @@ std::vector<linearmotion> linemoves = {
   linearmotion(
     3.5, 6.5, M_PI/2,
     new intakecommandset(new std::vector<std::vector<double>> {
-      {0,100, 90, 100, 500}
+      {0,100, 90, 100, 200}
     }, &intakes)
   )
 };
@@ -83,6 +83,9 @@ std::uint32_t oldtime = 0;
 /********************************************************************************/
 void autonomous(){
   inertial.reset();
+  intakes.intake_velocity(0,50);
+  delay(250);
+  intakes.intake_velocity(0,0);
   while(inertial.is_calibrating()){
     delay(5);
   }
