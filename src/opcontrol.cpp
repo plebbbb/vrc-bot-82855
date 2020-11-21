@@ -24,14 +24,18 @@ bool configoptions[]{
 void opcontrol(){
   //TBD: fix the pointers on these so they actually work - probably done see older revisions for all the old stuff needed to get it to work
   // autonomous();
+  inertial.reset();
+  while(inertial.is_calibrating()){
+    delay(5);
+  }
   while(true){
     intakes.intake_velocity(200*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),200*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
     //angleG = fmod(((double)asdasd.get_heading()-90.00)*(180/M_PI),2*M_PI);
-    odo.posupdv2();
-    odometrycontrollerdebug();
+    double angleG = fmod(fmod(degtorad(-inertial.get_heading()),M_PI*2)+ M_PI/2,M_PI*2);
     //useonlyinopcontrol.ssc->vectormove(10, 10, 0, 10);
     //useonlyinopcontrol.relativemove(ctrl.get_analog(ANALOG_RIGHT_X));
     //odometrycontrollerdebug();
+
     // intakes.input();
     useonlyinopcontrol.move();
     if (ctrl.get_digital_new_press(DIGITAL_B)) configoptions[0] = !configoptions[0];

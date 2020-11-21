@@ -85,12 +85,14 @@ motorw xdrivemotors[] = {
 
 //below: V1.273 version
 double PIDKvals[][3] = {
-  {1,0,0.1},     //direct distance PID
-  {5,0,3},        //direct rotation PID for driver mode
-  {5,0,0.25},       //direct rotation PID
+  {1,0.00,0.1},     //direct distance PID
+  {5,0.00,3},        //direct rotation PID for driver mode
+  {5,0.00,0.25},       //direct rotation PID
   {2,0.00,1},       //heading offset PID
-  {8,0,9},          //direct X/Y axis PID
+  {8,0.00,9},          //direct X/Y axis PID
 };
+
+Imu inertial(15);
 
 //FOR REFRENCE: below is V1.215, where we had decent direct PID performance in line operation mode
 /*
@@ -141,7 +143,6 @@ dualScurve curvesets[] = {
 
 //dataset for motion parameters
 /*
-
 */
 //data input scheme: array of position params, array of orientation params
 //yes, this is a sketchy way of data input, and yes we are doing this because we dont have to make anything fancier
@@ -319,7 +320,7 @@ motorf NBmotors[] = {
 Controller ctrl = E_CONTROLLER_MASTER;
 odometrycontroller odo = *new odometrycontroller(odencoders,Y_AXIS_TWHEEL_OFFSET,X_AXIS_TWHEEL_OFFSET);
 basecontroller base = *new basecontroller(xdrivemotors);
-coordcontrollerV2 mover = *new coordcontrollerV2{&base,bPID};
+coordcontrollerV2 mover{&base, bPID};
 intakecontroller intakes{Motor(6,false),Motor(7,true),Motor(8,false),Motor(3,true),DIGITAL_L1, DIGITAL_L2}; //epic cheese momento. 7 is right intake
 opcontrolcontroller useonlyinopcontrol = *new opcontrolcontroller(&base, controlscheme,&bPID[2],configoptions);
 //********************************************************************************//
@@ -336,7 +337,7 @@ double determinebiggest(double a, double b){
 double isposorneg(double input){
   //there is 100% a better solution but this works so imma keep it for now
   //if someone figures it out pls change it
-  return input/fabs(input); //its supposted to return 1 or -1, fyi
+  return isnanf(input/fabs(input)) || isinff(input/fabs(input)) ? 0 : input/fabs(input); //its supposted to return 1 or -1, fyi
 }
 
 //WARNING, CRAD AND TRAD MEAN NOTHING. TEST EACH IMPLEMENTATION

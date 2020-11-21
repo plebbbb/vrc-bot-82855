@@ -168,7 +168,7 @@ struct opcontrolcontroller{
       ssc = b; controls = css; rot = ro; configuration = config; tang = angleG;}
     //tbd - deal with interia issues from rotation at high speeds, PID insta targets what happens when analog stick is 0
     void move(){
-      double rs = logspeedcompute(deadzonecompute(ctrl.get_analog(controls[2])));
+      double rs = isposorneg(-ctrl.get_analog(controls[2]))*logspeedcompute(deadzonecompute(ctrl.get_analog(controls[2])));
       if (rs != 0 && configuration[2]) configuration[2] = false;
       rs = angletgtcompute(rs);
       double rawspeed = determinespeed(ctrl.get_analog(controls[0]),ctrl.get_analog(controls[1]),rs);

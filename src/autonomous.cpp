@@ -11,9 +11,9 @@ cool. In the 65% chance this approach is risky, we can switch to a function base
 system
 
 */
-
+/*
 std::vector<linearmotion> twentyseven{
-  *new linearmotion(
+  linearmotion(
     0, 72, M_PI/2, // x, y, angle
     new intakecommandset(
       new std::vector<std::vector<double>>{
@@ -21,55 +21,57 @@ std::vector<linearmotion> twentyseven{
     }, &intakes)
   ),
 
-  *new linearmotion(
+  linearmotion(
     0, 72, M_PI/2,
     new intakecommandset(new std::vector<std::vector<double>> {
       {100, 0, 0, 100, 500}
     }, &intakes)
   )
 };
-
-
+*/
 std::vector<linearmotion> linemoves = {
-  *new linearmotion(0, 24, M_PI/2)
+  linearmotion(0, 24, M_PI/2),
+  linearmotion(0.00 , 24 , 0.00),
+  linearmotion(0,0,0.00)
 };
 
+/*
 std::vector<linearmotion> circularpath = {
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(36, 24, M_PI*3/2),
-  *new linearmotion(72, 24, 0.0),
-  *new linearmotion(72, 60, 0.0),
-  *new linearmotion(36, 96, M_PI/2),
-  *new linearmotion(0, 96, 0.0),
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(36, 24, M_PI*3/2),
-  *new linearmotion(72, 24, 0.0),
-  *new linearmotion(72, 60, 0.0),
-  *new linearmotion(36, 96, M_PI/2),
-  *new linearmotion(0, 96, 0.0),
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(36, 24, M_PI*3/2),
-  *new linearmotion(72, 24, 0.0),
-  *new linearmotion(72, 60, 0.0),
-  *new linearmotion(36, 96, M_PI/2),
-  *new linearmotion(0, 96, 0.0),
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(36, 24, M_PI*3/2),
-  *new linearmotion(72, 24, 0.0),
-  *new linearmotion(72, 60, 0.0),
-  *new linearmotion(36, 96, M_PI/2),
-  *new linearmotion(0, 96, 0.0),
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(0, 24, M_PI),
-  *new linearmotion(36, 24, M_PI*3/2),
-  *new linearmotion(72, 24, 0.0),
-  *new linearmotion(72, 60, 0.0),
-  *new linearmotion(36, 96, M_PI/2),
-  *new linearmotion(0, 96, 0.0),
-  *new linearmotion(0, 24, M_PI)
+  linearmotion(0, 24, M_PI),
+  linearmotion(36, 24, M_PI*3/2),
+  linearmotion(72, 24, 0.0),
+  linearmotion(72, 60, 0.0),
+  linearmotion(36, 96, M_PI/2),
+  linearmotion(0, 96, 0.0),
+  linearmotion(0, 24, M_PI),
+  linearmotion(0, 24, M_PI),
+  linearmotion(36, 24, M_PI*3/2),
+  linearmotion(72, 24, 0.0),
+  linearmotion(72, 60, 0.0),
+  linearmotion(36, 96, M_PI/2),
+  linearmotion(0, 96, 0.0),
+  linearmotion(0, 24, M_PI),
+  linearmotion(0, 24, M_PI),
+  linearmotion(36, 24, M_PI*3/2),
+  linearmotion(72, 24, 0.0),
+  linearmotion(72, 60, 0.0),
+  linearmotion(36, 96, M_PI/2),
+  linearmotion(0, 96, 0.0),
+  linearmotion(0, 24, M_PI),
+  linearmotion(0, 24, M_PI),
+  linearmotion(36, 24, M_PI*3/2),
+  linearmotion(72, 24, 0.0),
+  linearmotion(72, 60, 0.0),
+  linearmotion(36, 96, M_PI/2),
+  linearmotion(0, 96, 0.0),
+  linearmotion(0, 24, M_PI),
+  linearmotion(0, 24, M_PI),
+  linearmotion(36, 24, M_PI*3/2),
+  linearmotion(72, 24, 0.0),
+  linearmotion(72, 60, 0.0),
+  linearmotion(36, 96, M_PI/2),
+  linearmotion(0, 96, 0.0),
+  linearmotion(0, 24, M_PI)
 };
 
 std::uint32_t oldtime = 0;
@@ -77,12 +79,18 @@ std::uint32_t oldtime = 0;
 //also, the old line testing code has been removed. See old commits for it, like pre october or something
 /********************************************************************************/
 void autonomous(){
+  inertial.reset();
+  while(inertial.is_calibrating()){
+    delay(5);
+  }
   int arr = 0;
   linemoves[arr].set_tgt();
   while(true){
-    odo.posupdv2();
+    double newang = fmod(fmod(degtorad(-inertial.get_heading()),M_PI*2)+ M_PI/2,M_PI*2);
+    odo.posupdvIMU(newang-angleG);
+//    lcd::clear();
     odometrycontrollerdebug();
-    if(linemoves[arr].updatesystems() && mover.update()){
+    if(/*linemoves[arr].updatesystems() &&*/ mover.update()){
       arr++;
       if(linemoves.size() == arr) arr--;
       linemoves[arr].set_tgt();

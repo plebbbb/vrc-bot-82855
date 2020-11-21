@@ -7,14 +7,54 @@ struct odometrycontroller{
   ADIEncoder* right;
   ADIEncoder* back;
   double ds, db; //offsets from center of rotation, not diameter
+  int  PLV = 0;
+  int PRV = 0;
+  int PBV = 0;
   odometrycontroller(ADIEncoder en[],double s, double b):ds(s),db(b){left = &en[0]; right = &en[1]; back = &en[2];}
   //below: lazier, revised edition. Seperates into local and global coordinate conversions instead of all in one
   void posupdv2(){
     double xLN, yLN;
+    PLV+=left->get_value();
+    PRV+=right->get_value();
+    PBV+=back->get_value();
     double LD = rottodist(degtorad(left->get_value()),STD_TWHEEL_RADIUS);
     double RD = rottodist(degtorad(right->get_value()),STD_TWHEEL_RADIUS);
     double HD = rottodist(degtorad(back->get_value()),STD_BTWHEEL_RADIUS);
     double rang = ((RD-LD)/(ds*2));
+    if (rang == 0){
+      xLN = HD;
+      yLN = RD;
+    }
+    else {
+      yLN = 2*sin(rang/2)*(LD/rang + ds);
+      xLN = 2*sin(rang/2)*(HD/rang + db);
+    }
+    double avang = angleG+(rang/2);
+    double xC = yLN*cos(avang)+xLN*cos(avang-(M_PI/2)); //conversion to global coords
+    double yC = yLN*sin(avang)+xLN*sin(avang-(M_PI/2));
+    xG+=xC;
+    yG+=yC;
+    angleG+=rang;
+    if (angleG > (M_PI*2)) angleG = angleG - (M_PI*2);
+    if (angleG < 0) angleG = angleG + (M_PI*2);
+    estspd = sqrt(xLN*xLN + yLN*yLN)*100; //x100 to convert to in/s from in/10ms
+    if (xC != 0) heading = fmod(atan2(yC,xC),(2*M_PI));
+    else if (yC > 0) heading = M_PI/2; //if moving directly up
+    else if (yC < 0) heading = (3*M_PI)/2; //if moving directly down
+    else heading = 0; //if not moving
+    left->reset(); //these resets dont seem to be reliable, so we may have to resort to storing the pre update value
+    right->reset();
+    back->reset();
+  }
+
+  void posupdvIMU(double rang){
+    double xLN, yLN;
+    PLV+=left->get_value();
+    PRV+=right->get_value();
+    PBV+=back->get_value();
+    double LD = rottodist(degtorad(left->get_value()),STD_TWHEEL_RADIUS);
+    double RD = rottodist(degtorad(right->get_value()),STD_TWHEEL_RADIUS);
+    double HD = rottodist(degtorad(back->get_value()),STD_BTWHEEL_RADIUS);
     if (rang == 0){
       xLN = HD;
       yLN = RD;
@@ -75,58 +115,21 @@ struct coordcontroller{
     double xGD = (xyaT[0]-xG); //global x distance
     double yGD = (xyaT[1]-yG); //global y distance
     double dist = sqrt(xGD*xGD+yGD*yGD);
-    //the whole idea of this is to figure out what direction we moved in so we can auto orient ourselves in the most efficient direction.
-    //the current implementation uses instanious rates of change to do this, meaning that if we dont move things get messed up by divison by zero.
-    if (GLOBAL_PERC_COMPLETION == 0.00) {
-      distance = dist;
-      double sl = determinesmallest(100, 0.75*distance+20); //linear formula for s curve speed limit, def not realistic but its close enough
-      controllers[0].Scurve->a.vars[0] = sl;
-      controllers[0].Scurve->b.vars[0] = sl; //could be jank if there isnt a different downward S curve
-    }
     double xD = 0;
     double yD = 0;
-    double xCC = 0; //independent X axis PID
-    double yCC = 0; //independent Y axis PID
     double rD = 0; //VERY janky figure out better solution than a hard multiplier
-    //we switch modes into an axis specific PID mode once we get close to prevent circular movement
+    //we switch modes into a direct axis specific PID mode once we get close to prevent circular movement
     //this if statement can be optimized to just overwrite the GD variables instead of making the updvals, but this is more readable
-    xCC = controllers[4].update(-xGD*cos(angleG) + -yGD*sin(angleG)); //neg b/c PID responds to offset to target, not other way around
-    yCC = controllers[5].update(-yGD*cos(angleG) + -xGD*sin(angleG)); // not sure if this should be deleted? - John
-    if (isnanf(xCC) || isinff(xCC)) xCC = 0;
-    if (isnanf(yCC) || isinff(yCC)) yCC = 0;
-    if(isnanf(rD)) rD = 0;
-    if (anglemode) rD = AOM_P_VAL*determinesmallestA(
-        determinesmallestA(getrelrad(angleG,tgtangent),getrelrad(angleG,tgtangent+M_PI/2)),
-        determinesmallestA(getrelrad(angleG,tgtangent+M_PI),getrelrad(angleG,tgtangent+(3*M_PI/2)))
-    );
-    else rD = getrelrad(angleG,xyaT[2]);
-
-
-    GLOBAL_PERC_COMPLETION = fabs(100.0*(dist/distance));
-    if (isnanf(GLOBAL_PERC_COMPLETION) || isinff(GLOBAL_PERC_COMPLETION)) GLOBAL_PERC_COMPLETION = 100; //fix divison by zero if distance = 0
-    //double LPID = fabs(controllers[0].update(GLOBAL_PERC_COMPLETION)); //controllers is now on a percent basis
-    double LPID = fabs(controllers[0].update(dist));
-    LPID*=(bool)round(LPID*4);//if under 0.125 dist kill LPID
-
-
-    if(isnanf(LPID)|| isinff(LPID)) LPID = 0; //this shouldnt have to exist, it only means that the PID is borked somewhere
-
-
     if (dist < 2.5){ //trigger x-y specific PID on activation
       xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
       yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
       rD = controllers[1].update(-7.5*(getrelrad(angleG,xyaT[2])));
-
     }else{
-      xD = 0.5*xCC*cos(getrelrad(angleG-M_PI/2,0))+0.5*yCC*cos(getrelrad(angleG,M_PI));
-      yD = 0.5*yCC*sin(getrelrad(angleG,M_PI))+0.5*xCC*sin(getrelrad(angleG-M_PI/2,0));
+      double updXval = controllers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
+      double updYval = controllers[5].update(-yGD);
+      xD = updXval*cos(getrelrad(angleG-M_PI/2,0))+updYval*cos(getrelrad(angleG,M_PI));
+      yD = updYval*sin(getrelrad(angleG,M_PI))+updXval*sin(getrelrad(angleG-M_PI/2,0));
       rD = controllers[1].update(-20*(getrelrad(angleG,xyaT[2])));
-    }
-    xCC = controllers[4].update(-xGD); //neg b/c PID responds to offset to target, not other way around
-    yCC = controllers[5].update(-yGD);
-
-    if (dist < 4){
-      LPID = xCC + yCC;
     }
 
     //if ((sqrt(pow(xD,2)+pow(yD,2))) > 10) yO = controllers[3].update(getrelrad(heading, atan2(xG-xyaT[0],yG-xyaT[1])));
@@ -134,19 +137,20 @@ struct coordcontroller{
     //Below: Sketchy, and most likely redundent math to account for yO in the local coordinate system
     //xD+=yO*sin(atan2(xD,yD));
     //yD+=yO*cos(atan2(xD,yD));
-    //double LPID = fabs(xCC) + fabs(yCC);
-    double RPID = determinesmallest(fabs(rD),10);
+    if(isnanf(rD)) rD = 0;
+    double LPID = fabs(controllers[0].update(dist));
+    double RPID = fabs(rD);
     double speed = determinesmallest(70, LPID+RPID);
-//   lcd::print(1,"S curve cap:%f",controllers[0].Scurve->b->vars[0]);
-  //  lcd::print(3,"Speed: %f",speed);
-  /*  lcd::print(4,"percent tgt: %f", 100*(dist/distance));
+    lcd::print(3,"Speed: %f",speed);
+    lcd::print(4,"dist: %f", dist);
     lcd::print(5,"linear PID: %f", LPID);
-    lcd::print(6,"rotational PID: %f", RPID);*/
+    lcd::print(6,"rotational PID: %f", RPID);
     mBase->vectormove(xD,yD,rD,speed);
         //less than 2 inch distance, and less than 2% angle offset to commit to next stage
-    if (round(dist/4 + fabs(rD/(M_PI*2))*5) == 0) return true;
+    if (round(dist/2 + fabs(rD/M_PI)*50) == 0) return true;
     else return false;
   }
+
 
   //this variation is for usage with motionpaths, where controllers merely maintains the speed target given by TSP
   //automatic angle optimization doesn't self check if it's divisible here, so it's dependent on AOM being disabled at the very end of each movement
@@ -207,18 +211,20 @@ struct coordcontrollerV2{
     double yGD = (yG - xyaT[1]);
     double d = sqrtf(xGD*xGD + yGD*yGD);
     computeglobalstate(d);
-    double rD =  getrelrad(angleG,xyaT[2]);
+    double rD =  60*getrelrad(angleG,xyaT[2]); //conversion to roughly degrees units
     if (isnanf(rD)) rD = 0; //where is our division by zero at?
-    double xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative to local axis
-    double yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0));
+  //  double xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative to local axis
+    //double yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0));
+    double xD = xGD*cos(getrelrad(angleG-M_PI/2,0))+yGD*cos(getrelrad(angleG,M_PI)); //relative distances to target
+    double yD = yGD*sin(getrelrad(angleG,M_PI))+xGD*sin(getrelrad(angleG-M_PI/2,0)); //relative distances to target
     double XP = controllers[4].update(xD);
     double YP = controllers[5].update(yD);
   //  double RP = 0;
-    double RP = controllers[1].update((-distF)/(d)*rD);
+    double RP = -rD;
     if(isnanf(RP)) RP = 0;
-    double SP = determinesmallest(70, fabs(XP) + fabs(YP) + fabs(RP));
-  //  lcd::print(4,"%f,%f,%f", xD, yD, rD);
-  //  lcd::print(5,"%f,%f,%f,%f", XP, YP, RP, SP);
+    double SP = determinesmallest(15, fabs(XP) + fabs(YP) + fabs(RP));
+    lcd::print(4,"%f", rD);
+    lcd::print(5,"%f %f", RP, SP);
     BASE->vectormove(XP, YP, RP, SP);
     if(xGD*xGD + yGD*yGD <= 1){ //within radius 1in circle from point
       //BASE->vectormove(0,0,RP,SP);
