@@ -30,9 +30,9 @@ void opcontrol(){
   }
   int Oang = M_PI/2;
   while(true){
-//    intakes.intake_velocity(200*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),200*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
-      angleG = getrelrad(fmod(fmod(degtorad(inertial.get_heading()),M_PI*2)+M_PI/2,M_PI*2), angleG);
-  //  odo.posupdv2();
+    intakes.intake_velocity(200*(ctrl.get_digital(DIGITAL_L1)-ctrl.get_digital(DIGITAL_L2)),200*(ctrl.get_digital(DIGITAL_R1)-ctrl.get_digital(DIGITAL_R2)));
+    //angleG = getrelrad(fmod(fmod(degtorad(inertial.get_heading()),M_PI*2)+M_PI/2,M_PI*2), angleG);
+    odo.posupdv2();
   //  lcd::clear();
     odometrycontrollerdebug();
     lcd::print(6,"%d",odo.PLV);

@@ -30,10 +30,12 @@ std::vector<linearmotion> twentyseven{
 };
 */
 std::vector<linearmotion> linemoves = {
-  linearmotion(0.00, 10.00, 0.00),
-  linearmotion(0, 10.00, 1.5*M_PI),
-  linearmotion(0,0,1.5*M_PI)
-
+  linearmotion(
+    3.5, 6.5, M_PI/2,
+    new intakecommandset(new std::vector<std::vector<double>> {
+      {0,100, 90, 100, 500}
+    }, &intakes)
+  )
 };
 
 /*
@@ -91,7 +93,7 @@ void autonomous(){
     odo.posupdv2();
 //    lcd::clear();
     odometrycontrollerdebug();
-    if(/*linemoves[arr].updatesystems() &&*/ mover.update()){
+    if(mover.update() && linemoves[arr].updatesystems()){
       arr++;
       if(linemoves.size() == arr) arr--;
       linemoves[arr].set_tgt();
