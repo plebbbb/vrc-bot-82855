@@ -238,16 +238,16 @@ struct coordcontrollerv2{
     double updYval = controllers[5].update(yGD);
     double XP = updXval*cos(getrelrad(angleG-M_PI/2,0))+updYval*cos(getrelrad(angleG,M_PI));
     double YP = updYval*sin(getrelrad(angleG,M_PI))+updXval*sin(getrelrad(angleG-M_PI/2,0));
-    rD = controllers[1].update(-(getrelrad(angleG,xyaT[2])));
-    //double RP = 0;
-    double RP = rD;
-    if(isnanf(RP)) RP = 0;
+    //rD = controllers[1].update(-(getrelrad(angleG,xyaT[2])));
+    double RP = 0;
+    //double RP = rD;
+  //  if(isnanf(RP)) RP = 0;
     double SP = determinesmallest(70, fabs(XP) + fabs(YP) + fabs(RP));
-    lcd::print(4,"%f", rD);
-    lcd::print(5,"%f %f", RP, SP);
+    //lcd::print(4,"%f", rD);
+    lcd::print(7,"%f %f %f", GLOBAL_PERC_COMPLETION, distF, d);
     if(xGD*xGD + yGD*yGD <= 1){ //within radius 1in circle from point
-      if (fabs(rD) <= 0.025) return true; //aprox 1.6 degree margin
-      return false;
+      //if (fabs(rD) <= 0.025) return true; //aprox 1.6 degree margin
+      return true;
     }
     BASE->vectormove(XP, YP, RP, SP);
     return false;
